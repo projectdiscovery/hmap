@@ -33,5 +33,5 @@ type ScannerOptions struct {
 	FetchValues bool
 
 	// the handler that handles the incoming data
-	Handler func(k, v string) bool
+	Handler func(k []byte, v []byte) error
 }
