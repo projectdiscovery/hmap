@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -218,8 +217,8 @@ func (ldb *LevelDB) Scan(scannerOpt ScannerOptions) error {
 
 	for iter.Next() {
 		key := iter.Key()
-		val := strings.SplitN(string(iter.Value()), ";", 2)[1]
-		if !valid(key) || !scannerOpt.Handler(string(key), string(val)) {
+		val := bytes.SplitN(iter.Value(), []byte(";"), 2)[1]
+		if !valid(key) || scannerOpt.Handler(key, val) != nil {
 			break
 		}
 	}

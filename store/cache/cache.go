@@ -19,6 +19,7 @@ type Cache interface {
 	DeleteExpired()
 	OnEvicted(func(string, interface{}))
 	CloneItems() map[string]Item
+	Scan(func([]byte, []byte) error)
 	ItemCount() int
 }
 
@@ -142,6 +143,15 @@ func (c *CacheMemory) OnEvicted(f func(string, interface{})) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.onEvicted = f
+}
+
+func (c *CacheMemory) Scan(f func([]byte, []byte) error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for k, item := range c.Items {
+		f([]byte(k), item.Object.([]byte))
+	}
 }
 
 func (c *CacheMemory) CloneItems() map[string]Item {

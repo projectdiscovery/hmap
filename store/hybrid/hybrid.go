@@ -166,6 +166,18 @@ func (hm *HybridMap) Del(key string) error {
 	return nil
 }
 
+func (hm *HybridMap) Scan(f func([]byte, []byte) error) {
+	switch hm.options.Type {
+	case Memory:
+		hm.memorymap.Scan(f)
+	case Hybrid:
+		hm.memorymap.Scan(f)
+		hm.diskmap.Scan(disk.ScannerOptions{Handler: f})
+	case Disk:
+		hm.diskmap.Scan(disk.ScannerOptions{Handler: f})
+	}
+}
+
 func (hm *HybridMap) Size() int64 {
 	return 0
 }
