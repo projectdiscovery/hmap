@@ -23,6 +23,7 @@ type DBType int
 const (
 	LevelDB DBType = iota
 	BadgerDB
+	PogrebDB
 )
 
 type Options struct {
@@ -90,6 +91,12 @@ func New(options Options) (*HybridMap, error) {
 		switch options.DBType {
 		case BadgerDB:
 			db, err := disk.OpenBadgerDB(diskmapPathm)
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
+		case PogrebDB:
+			db, err := disk.OpenPogrebDB(diskmapPathm)
 			if err != nil {
 				return nil, err
 			}
