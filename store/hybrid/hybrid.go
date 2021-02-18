@@ -13,9 +13,16 @@ import (
 type MapType int
 
 const (
-	Memory = iota
+	Memory MapType = iota
 	Disk
 	Hybrid
+)
+
+type DBType int
+
+const (
+	LevelDB DBType = iota
+	BadgerDB
 )
 
 type Options struct {
@@ -23,6 +30,7 @@ type Options struct {
 	DiskExpirationTime   time.Duration
 	JanitorTime          time.Duration
 	Type                 MapType
+	DBType               DBType
 	MemoryGuardForceDisk bool
 	MemoryGuard          bool
 	MaxMemorySize        int
@@ -43,11 +51,13 @@ var DefaultMemoryOptions = Options{
 
 var DefaultDiskOptions = Options{
 	Type:    Disk,
+	DBType:  LevelDB,
 	Cleanup: true,
 }
 
 var DefaultHybridOptions = Options{
 	Type:                 Hybrid,
+	DBType:               LevelDB,
 	MemoryExpirationTime: time.Duration(5) * time.Minute,
 	JanitorTime:          time.Duration(1) * time.Minute,
 }
@@ -77,11 +87,22 @@ func New(options Options) (*HybridMap, error) {
 		}
 
 		hm.diskmapPath = diskmapPathm
-		db, err := disk.OpenLevelDB(diskmapPathm)
-		if err != nil {
-			return nil, err
+		switch options.DBType {
+		case BadgerDB:
+			db, err := disk.OpenBadgerDB(diskmapPathm)
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
+		case LevelDB:
+			fallthrough
+		default:
+			db, err := disk.OpenLevelDB(diskmapPathm)
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
 		}
-		hm.diskmap = db
 	}
 
 	if options.Type == Hybrid {
