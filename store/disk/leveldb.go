@@ -23,7 +23,6 @@ type LevelDB struct {
 // OpenLevelDB - Opens the specified path
 func OpenLevelDB(path string) (*LevelDB, error) {
 	db, err := leveldb.OpenFile(path, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +129,7 @@ func (ldb *LevelDB) get(k string) ([]byte, error) {
 
 	if delete {
 		ldb.db.Delete([]byte(k), nil)
-		return data, errors.New("key not found")
+		return data, ErrNotFound
 	}
 
 	return data, nil

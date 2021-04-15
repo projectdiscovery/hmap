@@ -17,8 +17,11 @@ func main() {
 	// go memoryExpire(&wg)
 	// wg.Add(1)
 	// go disk(&wg)
+	// wg.Add(1)
+	// go hybridz(&wg)
+	// wg.Wait()
 	wg.Add(1)
-	go hybridz(&wg)
+	allDisks(&wg)
 	wg.Wait()
 }
 
@@ -76,7 +79,7 @@ func disk(wg *sync.WaitGroup) {
 	}
 	v, ok := hm.Get("a")
 	if ok {
-		log.Printf(string(v))
+		log.Println(string(v))
 		return
 	}
 	log.Printf("error: not found")
@@ -124,4 +127,75 @@ func hybridz(wg *sync.WaitGroup) {
 	} else {
 		log.Println("Read2 (memory) Not found")
 	}
+}
+
+func allDisks(wg *sync.WaitGroup) error {
+	defer wg.Done()
+
+	total := 10000000
+
+	opts := hybrid.DefaultDiskOptions
+	// leveldb
+	opts.DBType = hybrid.LevelDB
+	_, err := testhybrid("leveldb", opts, total)
+	if err != nil {
+		return err
+	}
+
+	// badger
+	opts.DBType = hybrid.BadgerDB
+	_, err = testhybrid("badger", opts, total)
+	if err != nil {
+		return err
+	}
+
+	// pogreb
+	opts.DBType = hybrid.PogrebDB
+	_, err = testhybrid("pogreb", opts, total)
+	if err != nil {
+		return err
+	}
+
+	// bbolt
+	opts.DBType = hybrid.BBoltDB
+	_, err = testhybrid("bbolt", opts, total)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func testhybrid(name string, opts hybrid.Options, total int) (duration time.Duration, err error) {
+	start := time.Now()
+
+	log.Println("starting:", name)
+
+	hm, err := hybrid.New(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// write
+	written := 0
+	for i := 0; i < total; i++ {
+		if err = hm.Set(fmt.Sprint(i), []byte("test")); err != nil {
+			duration = time.Since(start)
+			return
+		}
+		written++
+	}
+
+	// scan
+	read := 0
+	hm.Scan(func(k, v []byte) error {
+		_, _ = k, v
+		read++
+		return nil
+	})
+
+	err = hm.Close()
+	duration = time.Since(start)
+	log.Printf("written: %d,read %d, took:%s\n", written, read, duration)
+	return
 }

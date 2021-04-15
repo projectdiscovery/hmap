@@ -2,7 +2,6 @@ package disk
 
 import (
 	"bytes"
-	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -106,14 +105,14 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 
 	if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 		delete = true
-		err = errors.New("key not found")
+		err = ErrNotFound
 	} else {
 		data = actual
 	}
 
 	if delete {
 		pdb.db.Delete([]byte(k))
-		return data, errors.New("key not found")
+		return data, ErrNotFound
 	}
 
 	return data, nil

@@ -2,7 +2,9 @@ package hybrid
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -24,6 +26,7 @@ const (
 	LevelDB DBType = iota
 	BadgerDB
 	PogrebDB
+	BBoltDB
 )
 
 type Options struct {
@@ -88,6 +91,7 @@ func New(options Options) (*HybridMap, error) {
 		}
 
 		hm.diskmapPath = diskmapPathm
+		log.Println(diskmapPathm)
 		switch options.DBType {
 		case BadgerDB:
 			db, err := disk.OpenBadgerDB(diskmapPathm)
@@ -97,6 +101,12 @@ func New(options Options) (*HybridMap, error) {
 			hm.diskmap = db
 		case PogrebDB:
 			db, err := disk.OpenPogrebDB(diskmapPathm)
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
+		case BBoltDB:
+			db, err := disk.OpenBoltDBB(filepath.Join(diskmapPathm, "bb"))
 			if err != nil {
 				return nil, err
 			}
@@ -137,20 +147,21 @@ func (hm *HybridMap) Close() error {
 }
 
 func (hm *HybridMap) Set(k string, v []byte) error {
+	var err error
 	switch hm.options.Type {
 	case Hybrid:
 		fallthrough
 	case Memory:
 		if hm.options.MemoryGuardForceDisk {
-			hm.diskmap.Set(k, v, hm.options.DiskExpirationTime)
+			err = hm.diskmap.Set(k, v, hm.options.DiskExpirationTime)
 		} else {
 			hm.memorymap.Set(k, v)
 		}
 	case Disk:
-		hm.diskmap.Set(k, v, hm.options.DiskExpirationTime)
+		err = hm.diskmap.Set(k, v, hm.options.DiskExpirationTime)
 	}
 
-	return nil
+	return err
 }
 
 func (hm *HybridMap) Get(k string) ([]byte, bool) {
