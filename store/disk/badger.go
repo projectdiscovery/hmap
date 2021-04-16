@@ -2,7 +2,6 @@ package disk
 
 import (
 	"bytes"
-	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -47,7 +46,7 @@ func (bdb *BadgerDB) GC() error {
 
 // Incr - increment the key by the specified value
 func (bdb *BadgerDB) Incr(k string, by int64) (int64, error) {
-	return 0, nil
+	return 0, ErrNotImplemented
 }
 
 func (bdb *BadgerDB) set(k, v []byte, ttl time.Duration) error {
@@ -69,7 +68,7 @@ func (bdb *BadgerDB) Set(k string, v []byte, ttl time.Duration) error {
 
 // MSet - sets multiple key-value pairs
 func (bdb *BadgerDB) MSet(data map[string][]byte) error {
-	return nil
+	return ErrNotImplemented
 }
 
 func (bdb *BadgerDB) get(k string) ([]byte, error) {
@@ -90,7 +89,7 @@ func (bdb *BadgerDB) get(k string) ([]byte, error) {
 		expires, actual := parts[0], parts[1]
 		if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 			delete = true
-			err = errors.New("key not found")
+			err = ErrNotFound
 		} else {
 			data = actual
 		}
