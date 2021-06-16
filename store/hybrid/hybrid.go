@@ -2,7 +2,6 @@ package hybrid
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -91,7 +90,6 @@ func New(options Options) (*HybridMap, error) {
 		}
 
 		hm.diskmapPath = diskmapPathm
-		log.Println(diskmapPathm)
 		switch options.DBType {
 		case BadgerDB:
 			db, err := disk.OpenBadgerDB(diskmapPathm)
