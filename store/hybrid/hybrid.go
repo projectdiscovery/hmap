@@ -209,14 +209,21 @@ func (hm *HybridMap) Scan(f func([]byte, []byte) error) {
 		hm.memorymap.Scan(f)
 	case Hybrid:
 		hm.memorymap.Scan(f)
-		hm.diskmap.Scan(disk.ScannerOptions{Handler: f})
+		_ = hm.diskmap.Scan(disk.ScannerOptions{Handler: f})
 	case Disk:
-		hm.diskmap.Scan(disk.ScannerOptions{Handler: f})
+		_ = hm.diskmap.Scan(disk.ScannerOptions{Handler: f})
 	}
 }
 
 func (hm *HybridMap) Size() int64 {
-	return 0
+	var count int64
+	if hm.memorymap != nil {
+		count += int64(hm.memorymap.ItemCount())
+	}
+	if hm.diskmap != nil {
+		count += hm.diskmap.Size()
+	}
+	return count
 }
 
 func (hm *HybridMap) TuneMemory() {
