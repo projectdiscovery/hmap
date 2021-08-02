@@ -89,7 +89,6 @@ func (bdb *BadgerDB) get(k string) ([]byte, error) {
 		expires, actual := parts[0], parts[1]
 		if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 			delete = true
-			err = ErrNotFound
 		} else {
 			data = actual
 		}
