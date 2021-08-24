@@ -100,6 +100,10 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	if len(item) == 0 {
+		return []byte{}, nil
+	}
+
 	parts := bytes.SplitN(item, []byte(expSeparator), 2)
 	expires, actual := parts[0], parts[1]
 
