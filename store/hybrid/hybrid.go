@@ -137,7 +137,9 @@ func New(options Options) (*HybridMap, error) {
 }
 
 func (hm *HybridMap) Close() error {
-	hm.diskmap.Close()
+	if hm.diskmap != nil {
+		hm.diskmap.Close()
+	}
 	if hm.diskmapPath != "" && hm.options.Cleanup {
 		return os.RemoveAll(hm.diskmapPath)
 	}
