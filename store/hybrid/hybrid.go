@@ -54,13 +54,13 @@ var DefaultMemoryOptions = Options{
 
 var DefaultDiskOptions = Options{
 	Type:    Disk,
-	DBType:  LevelDB,
+	DBType:  PogrebDB,
 	Cleanup: true,
 }
 
 var DefaultHybridOptions = Options{
 	Type:                 Hybrid,
-	DBType:               LevelDB,
+	DBType:               PogrebDB,
 	MemoryExpirationTime: time.Duration(5) * time.Minute,
 	JanitorTime:          time.Duration(1) * time.Minute,
 }
