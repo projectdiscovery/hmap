@@ -63,7 +63,6 @@ type HybridMap struct {
 	memorymap   cache.Cache
 	diskmap     disk.DB
 	diskmapPath string
-	memoryguard *memoryguard
 }
 
 func New(options Options) (*HybridMap, error) {

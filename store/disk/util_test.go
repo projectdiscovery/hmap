@@ -31,7 +31,7 @@ func utiltestOperations(t *testing.T, db DB, maxItems int) {
 	// scan
 	read := 0
 	db.Scan(ScannerOptions{
-		Handler: func(k, v []byte) error {
+		Handler: func(k, v interface{}) error {
 			_, _ = k, v
 			read++
 			return nil
