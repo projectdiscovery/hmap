@@ -185,14 +185,12 @@ func (pdb *PebbleDB) Del(key string) error {
 
 // Scan - iterate over the whole store using the handler function
 func (pdb *PebbleDB) Scan(scannerOpt ScannerOptions) error {
-	it := pdb.db.NewIter(&pebble.IterOptions{})
-	hasNext := true
-	for hasNext {
-		key, val := it.Key(), it.Value()
+	iter := pdb.db.NewIter(nil)
+	for iter.First(); iter.Valid(); iter.Next() {
+		key, val := iter.Key(), iter.Value()
 		if scannerOpt.Handler(key, val) != nil {
 			break
 		}
-		hasNext = it.Next()
 	}
 
 	return nil
