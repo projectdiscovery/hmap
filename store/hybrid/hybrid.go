@@ -68,16 +68,18 @@ type HybridMap struct {
 func New(options Options) (*HybridMap, error) {
 	var hm HybridMap
 	if options.Type == Memory || options.Type == Hybrid {
-		if options.Type == Hybrid && options.OnEvicted == nil {
-			options.OnEvicted = func(k, v interface{}) {
-				hm.diskmap.Set(fmt.Sprint(k), v.([]byte), 0)
-			}
-		}
 		var err error
 		hm.memorymap, err = cache.New(cache.Options{
-			Duration:  options.MemoryExpirationTime,
-			Size:      options.MaxMemoryItem,
-			OnEvicted: options.OnEvicted,
+			Duration: options.MemoryExpirationTime,
+			Size:     options.MaxMemoryItem,
+			OnEvicted: func(k, v interface{}) {
+				if options.Type == Hybrid {
+					hm.diskmap.Set(fmt.Sprint(k), v.([]byte), 0)
+				}
+				if options.OnEvicted != nil {
+					options.OnEvicted(k, v)
+				}
+			},
 		})
 		if err != nil {
 			return nil, err
