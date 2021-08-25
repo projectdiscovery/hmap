@@ -1,4 +1,3 @@
-// this is a wrapper around gcache - the eviction strategy is used to move data to disk
 package cache
 
 import (
@@ -24,30 +23,28 @@ const (
 )
 
 type Cache interface {
-	SetWithExpiration(string, interface{}, time.Duration)
-	Set(string, interface{})
+	SetWithExpiration(string, interface{}, time.Duration) error
+	Set(string, interface{}) error
 	Get(string) (interface{}, bool)
 	Delete(string) (interface{}, bool)
-	CloneItems() map[string]Item
-	Scan(func([]byte, []byte) error)
+	CloneItems() map[string]interface{}
+	Scan(func(interface{}, interface{}) error)
 	ItemCount() int
 }
 
 type CacheMemory struct {
 	DefaultExpiration time.Duration
 	cache             gcache.Cache
-	Items             map[string]Item
 	onEvicted         func(string, interface{})
-	janitor           *janitor
 }
 
-func (c *CacheMemory) SetWithExpiration(k string, x interface{}, d time.Duration) {
+func (c *CacheMemory) SetWithExpiration(k string, x interface{}, d time.Duration) error {
 	return c.set(k, x, d)
 }
 
 func (c *CacheMemory) set(k string, x interface{}, d time.Duration) error {
 	if d <= 0 {
-		c.cache.Set(k, x)
+		return c.cache.Set(k, x)
 	}
 	return c.cache.SetWithExpire(k, x, d)
 }
@@ -57,6 +54,10 @@ func (c *CacheMemory) Set(k string, x interface{}) error {
 }
 
 func (c *CacheMemory) Get(k string) (interface{}, bool) {
+	return c.get(k)
+}
+
+func (c *CacheMemory) get(k string) (interface{}, bool) {
 	if !c.cache.Has(k) {
 		return nil, false
 	}
@@ -65,20 +66,6 @@ func (c *CacheMemory) Get(k string) (interface{}, bool) {
 		return value, false
 	}
 	return value, true
-}
-
-func (c *CacheMemory) get(k string) (interface{}, bool) {
-	item, found := c.Items[k]
-	if !found {
-		return nil, false
-	}
-	if item.Expiration > 0 {
-		if time.Now().UnixNano() > item.Expiration {
-			return nil, false
-		}
-	}
-
-	return item.Object, true
 }
 
 func (c *CacheMemory) Delete(k string) (interface{}, bool) {
@@ -124,11 +111,11 @@ func (c *CacheMemory) Empty() {
 	c.cache.Purge()
 }
 
-func New(options Options) *CacheMemory {
+func New(options Options) (*CacheMemory, error) {
 	return NewFrom(options, nil)
 }
 
-func NewFrom(options Options, items map[string]Item) *CacheMemory {
+func NewFrom(options Options, items map[string]interface{}) (*CacheMemory, error) {
 	maxSize := math.MaxInt32
 	if options.Size > 0 {
 		maxSize = options.Size
@@ -144,5 +131,16 @@ func NewFrom(options Options, items map[string]Item) *CacheMemory {
 	} else if options.LFU {
 		cache = cache.LFU()
 	}
-	return &CacheMemory{cache: cache.Build()}
+
+	if options.OnEvicted != nil {
+		cache.EvictedFunc(options.OnEvicted)
+	}
+
+	builtCache := cache.Build()
+	for k, v := range items {
+		if err := builtCache.Set(k, v); err != nil {
+			return nil, err
+		}
+	}
+	return &CacheMemory{cache: builtCache}, nil
 }
