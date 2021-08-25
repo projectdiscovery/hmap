@@ -6,50 +6,58 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akrylysov/pogreb"
+	"github.com/cockroachdb/pebble"
 )
 
-// PogrebDB - represents a pogreb db implementation
-type PogrebDB struct {
-	db *pogreb.DB
+// PebbleDB - represents a pebble db implementation
+type PebbleDB struct {
+	db *pebble.DB
 	sync.RWMutex
 }
 
 // OpenPogrebDB - Opens the specified path
-func OpenPogrebDB(path string) (*PogrebDB, error) {
-	db, err := pogreb.Open(path, nil)
+func OpenPebbleDB(path string) (*PebbleDB, error) {
+	db, err := pebble.Open(path, &pebble.Options{})
 	if err != nil {
 		return nil, err
 	}
 
-	pdb := new(PogrebDB)
+	pdb := new(PebbleDB)
 	pdb.db = db
 
 	return pdb, nil
 }
 
 // Size - returns the size of the database in bytes
-func (pdb *PogrebDB) Size() int64 {
-	size, err := pdb.db.FileSize()
-	if err != nil {
+func (pdb *PebbleDB) Size() int64 {
+	metrics := pdb.db.Metrics()
+	if metrics == nil {
 		return 0
 	}
-	return size
+	return metrics.Total().Size
 }
 
 // Close ...
-func (pdb *PogrebDB) Close() {
+func (pdb *PebbleDB) Close() {
 	pdb.db.Close()
 }
 
 // GC - runs the garbage collector
-func (pdb *PogrebDB) GC() error {
-	_, err := pdb.db.Compact()
-	return err
+func (pdb *PebbleDB) GC() error {
+	// find first and last key
+	iter := pdb.db.NewIter(&pebble.IterOptions{})
+	first := iter.Key()
+	var last []byte
+	for iter.Next() {
+		if iter.Last() {
+			last = iter.Key()
+		}
+	}
+	return pdb.db.Compact(first, last)
 }
 
 // Incr - increment the key by the specified value
-func (pdb *PogrebDB) Incr(k string, by int64) (int64, error) {
+func (pdb *PebbleDB) Incr(k string, by int64) (int64, error) {
 	pdb.Lock()
 	defer pdb.Unlock()
 
@@ -69,40 +77,40 @@ func (pdb *PogrebDB) Incr(k string, by int64) (int64, error) {
 	return valFloat, nil
 }
 
-func (pdb *PogrebDB) set(k, v []byte, ttl time.Duration) error {
+func (pdb *PebbleDB) set(k, v []byte, ttl time.Duration) error {
 	var expires int64
 	if ttl > 0 {
 		expires = time.Now().Add(ttl).Unix()
 	}
 	expiresBytes := append(intToByteSlice(expires), expSeparator[:]...)
 	v = append(expiresBytes, v...)
-	return pdb.db.Put(k, v)
+	return pdb.db.Set(k, v, pebble.Sync)
 }
 
 // Set - sets a key with the specified value and optional ttl
-func (pdb *PogrebDB) Set(k string, v []byte, ttl time.Duration) error {
+func (pdb *PebbleDB) Set(k string, v []byte, ttl time.Duration) error {
 	return pdb.set([]byte(k), v, ttl)
 }
 
 // MSet - sets multiple key-value pairs
-func (pdb *PogrebDB) MSet(data map[string][]byte) error {
+func (pdb *PebbleDB) MSet(data map[string][]byte) error {
 	return nil
 }
 
-func (pdb *PogrebDB) get(k string) ([]byte, error) {
+func (pdb *PebbleDB) get(k string) ([]byte, error) {
 	var data []byte
 	var err error
 
 	delete := false
 
-	item, err := pdb.db.Get([]byte(k))
+	s, closer, err := pdb.db.Get([]byte(k))
 	if err != nil {
 		return []byte{}, err
 	}
+	defer closer.Close()
 
-	if len(item) == 0 {
-		return []byte{}, nil
-	}
+	// make a copy of the byte slice as we need to return it safely
+	item := append(s[:0:0], s...)
 
 	parts := bytes.SplitN(item, []byte(expSeparator), 2)
 	expires, actual := parts[0], parts[1]
@@ -114,7 +122,10 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 	}
 
 	if delete {
-		pdb.db.Delete([]byte(k))
+		err := pdb.db.Delete([]byte(k), pebble.Sync)
+		if err != nil {
+			return data, err
+		}
 		return data, ErrNotFound
 	}
 
@@ -122,12 +133,12 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 }
 
 // Get - fetches the value of the specified k
-func (pdb *PogrebDB) Get(k string) ([]byte, error) {
+func (pdb *PebbleDB) Get(k string) ([]byte, error) {
 	return pdb.get(k)
 }
 
 // MGet - fetch multiple values of the specified keys
-func (pdb *PogrebDB) MGet(keys []string) [][]byte {
+func (pdb *PebbleDB) MGet(keys []string) [][]byte {
 	var data [][]byte
 	for _, key := range keys {
 		val, err := pdb.get(key)
@@ -141,11 +152,12 @@ func (pdb *PogrebDB) MGet(keys []string) [][]byte {
 }
 
 // TTL - returns the time to live of the specified key's value
-func (pdb *PogrebDB) TTL(key string) int64 {
-	item, err := pdb.db.Get([]byte(key))
+func (pdb *PebbleDB) TTL(key string) int64 {
+	item, closer, err := pdb.db.Get([]byte(key))
 	if err != nil {
 		return -2
 	}
+	defer closer.Close()
 
 	parts := bytes.SplitN(item, []byte(expSeparator), 2)
 	exp, _ := strconv.Atoi(string(parts[0]))
@@ -162,39 +174,21 @@ func (pdb *PogrebDB) TTL(key string) int64 {
 }
 
 // MDel - removes key(s) from the store
-func (pdb *PogrebDB) MDel(keys []string) error {
+func (pdb *PebbleDB) MDel(keys []string) error {
 	return nil
 }
 
 // Del - removes key from the store
-func (pdb *PogrebDB) Del(key string) error {
-	return pdb.db.Delete([]byte(key))
+func (pdb *PebbleDB) Del(key string) error {
+	return pdb.db.Delete([]byte(key), pebble.Sync)
 }
 
 // Scan - iterate over the whole store using the handler function
-func (pdb *PogrebDB) Scan(scannerOpt ScannerOptions) error {
-	valid := func(k []byte) bool {
-		if k == nil {
-			return false
-		}
-
-		if scannerOpt.Prefix != "" && !bytes.HasPrefix(k, []byte(scannerOpt.Prefix)) {
-			return false
-		}
-
-		return true
-	}
-
-	it := pdb.db.Items()
-	for {
-		key, val, err := it.Next()
-		if err == pogreb.ErrIterationDone {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		if !valid(key) || scannerOpt.Handler(key, val) != nil {
+func (pdb *PebbleDB) Scan(scannerOpt ScannerOptions) error {
+	iter := pdb.db.NewIter(nil)
+	for iter.First(); iter.Valid(); iter.Next() {
+		key, val := iter.Key(), iter.Value()
+		if scannerOpt.Handler(key, val) != nil {
 			break
 		}
 	}

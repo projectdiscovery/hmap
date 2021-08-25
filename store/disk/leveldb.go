@@ -2,7 +2,6 @@ package disk
 
 import (
 	"bytes"
-	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -122,7 +121,6 @@ func (ldb *LevelDB) get(k string) ([]byte, error) {
 
 	if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 		delete = true
-		err = errors.New("key not found")
 	} else {
 		data = actual
 	}

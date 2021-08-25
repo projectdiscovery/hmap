@@ -85,7 +85,7 @@ func (b *BBoltDB) get(k string) ([]byte, error) {
 		if err != nil {
 			return err
 		}
-		data := b.Get([]byte(k))
+		data = b.Get([]byte(k))
 		if data == nil {
 			return ErrNoData
 		}
@@ -93,7 +93,6 @@ func (b *BBoltDB) get(k string) ([]byte, error) {
 		expires, actual := parts[0], parts[1]
 		if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 			delete = true
-			err = ErrNotFound
 		} else {
 			data = actual
 		}
