@@ -1,10 +1,10 @@
 package hybrid
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/projectdiscovery/hmap/store/cache"
@@ -30,27 +30,20 @@ const (
 )
 
 type Options struct {
-	MemoryExpirationTime time.Duration
-	DiskExpirationTime   time.Duration
-	JanitorTime          time.Duration
-	Type                 MapType
-	DBType               DBType
-	MemoryGuardForceDisk bool
-	MemoryGuard          bool
-	MaxMemorySize        int
-	MemoryGuardTime      time.Duration
-	Path                 string
-	Cleanup              bool
-}
-
-var DefaultOptions = Options{
-	Type:                 Memory,
-	MemoryExpirationTime: time.Duration(5) * time.Minute,
-	JanitorTime:          time.Duration(1) * time.Minute,
+	MemoryExpirationTime   time.Duration
+	DiskExpirationTime     time.Duration
+	Type                   MapType
+	DBType                 DBType
+	MoveToDiskOnExpiration bool
+	Path                   string
+	Cleanup                bool
+	MaxMemoryItem          int
+	OnEvicted              func(interface{}, interface{})
 }
 
 var DefaultMemoryOptions = Options{
-	Type: Memory,
+	Type:          Memory,
+	MaxMemoryItem: 2500,
 }
 
 var DefaultDiskOptions = Options{
@@ -60,10 +53,9 @@ var DefaultDiskOptions = Options{
 }
 
 var DefaultHybridOptions = Options{
-	Type:                 Hybrid,
-	DBType:               LevelDB,
-	MemoryExpirationTime: time.Duration(5) * time.Minute,
-	JanitorTime:          time.Duration(1) * time.Minute,
+	Type:          Hybrid,
+	DBType:        LevelDB,
+	MaxMemoryItem: 2500,
 }
 
 type HybridMap struct {
@@ -77,7 +69,20 @@ type HybridMap struct {
 func New(options Options) (*HybridMap, error) {
 	var hm HybridMap
 	if options.Type == Memory || options.Type == Hybrid {
-		hm.memorymap = cache.New(options.MemoryExpirationTime, options.JanitorTime)
+		if options.Type == Hybrid && options.OnEvicted == nil {
+			options.OnEvicted = func(k, v interface{}) {
+				hm.diskmap.Set(fmt.Sprint(k), v.([]byte), 0)
+			}
+		}
+		var err error
+		hm.memorymap, err = cache.New(cache.Options{
+			Duration:  options.MemoryExpirationTime,
+			Size:      options.MaxMemoryItem,
+			OnEvicted: options.OnEvicted,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if options.Type == Disk || options.Type == Hybrid {
@@ -127,17 +132,6 @@ func New(options Options) (*HybridMap, error) {
 		}
 	}
 
-	if options.Type == Hybrid {
-		hm.memorymap.OnEvicted(func(k string, v interface{}) {
-			hm.diskmap.Set(k, v.([]byte), 0)
-		})
-	}
-
-	if options.MemoryGuard {
-		runMemoryGuard(&hm, options.MemoryGuardTime)
-		runtime.SetFinalizer(&hm, stopMemoryGuard)
-	}
-
 	hm.options = &options
 
 	return &hm, nil
@@ -159,11 +153,7 @@ func (hm *HybridMap) Set(k string, v []byte) error {
 	case Hybrid:
 		fallthrough
 	case Memory:
-		if hm.options.MemoryGuardForceDisk {
-			err = hm.diskmap.Set(k, v, hm.options.DiskExpirationTime)
-		} else {
-			hm.memorymap.Set(k, v)
-		}
+		hm.memorymap.Set(k, v)
 	case Disk:
 		err = hm.diskmap.Set(k, v, hm.options.DiskExpirationTime)
 	}
@@ -212,7 +202,7 @@ func (hm *HybridMap) Del(key string) error {
 	return nil
 }
 
-func (hm *HybridMap) Scan(f func([]byte, []byte) error) {
+func (hm *HybridMap) Scan(f func(interface{}, interface{}) error) {
 	switch hm.options.Type {
 	case Memory:
 		hm.memorymap.Scan(f)
@@ -233,15 +223,4 @@ func (hm *HybridMap) Size() int64 {
 		count += hm.diskmap.Size()
 	}
 	return count
-}
-
-func (hm *HybridMap) TuneMemory() {
-	// si := sysinfo.Get()
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	if m.Alloc >= uint64(hm.options.MaxMemorySize) {
-		hm.options.MemoryGuardForceDisk = true
-	} else {
-		hm.options.MemoryGuardForceDisk = false
-	}
 }
