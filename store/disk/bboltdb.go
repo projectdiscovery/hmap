@@ -2,6 +2,7 @@ package disk
 
 import (
 	"bytes"
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -175,9 +176,9 @@ func (b *BBoltDB) Scan(scannerOpt ScannerOptions) error {
 		return true
 	}
 	return b.db.View(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(b.BucketName))
-		if err != nil {
-			return err
+		b := tx.Bucket([]byte(b.BucketName))
+		if b == nil {
+			return errors.New("bucket not found")
 		}
 		c := b.Cursor()
 		for key, val := c.First(); key != nil; key, val = c.Next() {

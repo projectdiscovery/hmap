@@ -2,6 +2,7 @@ package disk
 
 import (
 	"bytes"
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -17,7 +18,10 @@ type BadgerDB struct {
 
 // OpenPogrebDB - Opens the specified path
 func OpenBadgerDB(path string) (*BadgerDB, error) {
-	db, err := badger.Open(badger.DefaultOptions(path))
+	badgerOptions := badger.DefaultOptions(path)
+	badgerOptions.EventLogging = false
+	badgerOptions.Logger = nil
+	db, err := badger.Open(badgerOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -74,18 +78,20 @@ func (bdb *BadgerDB) MSet(data map[string][]byte) error {
 func (bdb *BadgerDB) get(k string) ([]byte, error) {
 	var data []byte
 	delete := false
-
 	return data, bdb.db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(k))
 		if err != nil {
 			return err
 		}
 
-		_, err = item.ValueCopy(data)
+		data, err = item.ValueCopy(nil)
 		if err != nil {
 			return err
 		}
 		parts := bytes.SplitN(data, []byte(expSeparator), 2)
+		if len(data) == 2 {
+			return errors.New("couldn't retrieve data")
+		}
 		expires, actual := parts[0], parts[1]
 		if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 			delete = true
