@@ -27,6 +27,8 @@ const (
 	PogrebDB
 	BBoltDB
 	PebbleDB
+	// FileDB preserves input order
+	FileDB
 )
 
 type Options struct {
@@ -112,6 +114,12 @@ func New(options Options) (*HybridMap, error) {
 			hm.diskmap = db
 		case PebbleDB:
 			db, err := disk.OpenPebbleDB(diskmapPathm)
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
+		case FileDB:
+			db, err := disk.OpenFileDB(filepath.Join(diskmapPathm, "ff"))
 			if err != nil {
 				return nil, err
 			}
