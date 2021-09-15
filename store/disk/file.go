@@ -103,7 +103,7 @@ func (fdb *FileDB) Scan(scannerOpt ScannerOptions) error {
 	}
 
 	return fdb.db.Scan(func(key, val []byte) error {
-		if !valid(key) || scannerOpt.Handler(key, val) != nil {
+		if !valid(key) {
 			return nil
 		}
 		return scannerOpt.Handler(key, val)

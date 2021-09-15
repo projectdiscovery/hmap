@@ -6,6 +6,12 @@ import (
 )
 
 func TestKV(t *testing.T) {
+	testOperations := TestOperations{
+		Set:    true,
+		Get:    true,
+		Scan:   true,
+		Delete: true,
+	}
 	var db DB
 	// bbolt
 	dbpath, _ := utiltestGetPath(t)
@@ -15,7 +21,7 @@ func TestKV(t *testing.T) {
 		t.Error(err)
 	}
 	db.(*BBoltDB).BucketName = "test"
-	utiltestOperations(t, db, 100)
+	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 
 	// pebble
@@ -24,7 +30,7 @@ func TestKV(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	utiltestOperations(t, db, 100)
+	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 
 	// pogreb
@@ -33,7 +39,7 @@ func TestKV(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	utiltestOperations(t, db, 100)
+	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 
 	// leveldb
@@ -42,7 +48,7 @@ func TestKV(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	utiltestOperations(t, db, 100)
+	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 
 	// badgerdb
@@ -51,6 +57,18 @@ func TestKV(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	utiltestOperations(t, db, 100)
+	utiltestOperations(t, db, 100, testOperations)
+	utiltestRemoveDb(t, db, dbpath)
+
+	// filedb
+	testOperations.Get = false
+	testOperations.Delete = false
+	dbpath, _ = utiltestGetPath(t)
+	dbpath = filepath.Join(dbpath, "filedb")
+	db, err = OpenFileDB(dbpath)
+	if err != nil {
+		t.Error(err)
+	}
+	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 }
