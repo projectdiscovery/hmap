@@ -18,6 +18,15 @@ func TestKV(t *testing.T) {
 	utiltestOperations(t, db, 100)
 	utiltestRemoveDb(t, db, dbpath)
 
+	// pebble
+	dbpath, _ = utiltestGetPath(t)
+	db, err = OpenPebbleDB(dbpath)
+	if err != nil {
+		t.Error(err)
+	}
+	utiltestOperations(t, db, 100)
+	utiltestRemoveDb(t, db, dbpath)
+
 	// pogreb
 	dbpath, _ = utiltestGetPath(t)
 	db, err = OpenPogrebDB(dbpath)
