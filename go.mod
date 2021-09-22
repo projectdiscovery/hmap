@@ -18,7 +18,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/onsi/gomega v1.16.0 // indirect
-	github.com/projectdiscovery/filekv v0.0.0-20210915124239-3467ef45dd08
+	github.com/projectdiscovery/filekv v0.0.0-20210922185512-5e19b528081d
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0
 	go.etcd.io/bbolt v1.3.6
