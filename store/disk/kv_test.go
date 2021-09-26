@@ -24,15 +24,6 @@ func TestKV(t *testing.T) {
 	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 
-	// pebble
-	dbpath, _ = utiltestGetPath(t)
-	db, err = OpenPebbleDB(dbpath)
-	if err != nil {
-		t.Error(err)
-	}
-	utiltestOperations(t, db, 100, testOperations)
-	utiltestRemoveDb(t, db, dbpath)
-
 	// pogreb
 	dbpath, _ = utiltestGetPath(t)
 	db, err = OpenPogrebDB(dbpath)
@@ -45,15 +36,6 @@ func TestKV(t *testing.T) {
 	// leveldb
 	dbpath, _ = utiltestGetPath(t)
 	db, err = OpenLevelDB(dbpath)
-	if err != nil {
-		t.Error(err)
-	}
-	utiltestOperations(t, db, 100, testOperations)
-	utiltestRemoveDb(t, db, dbpath)
-
-	// badgerdb
-	dbpath, _ = utiltestGetPath(t)
-	db, err = OpenBadgerDB(dbpath)
 	if err != nil {
 		t.Error(err)
 	}
