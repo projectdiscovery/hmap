@@ -114,7 +114,10 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 	}
 
 	if delete {
-		pdb.db.Delete([]byte(k))
+		errDelete := pdb.db.Delete([]byte(k))
+		if errDelete != nil {
+			return data, errDelete
+		}
 		return data, ErrNotFound
 	}
 

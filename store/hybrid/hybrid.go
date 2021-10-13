@@ -25,6 +25,8 @@ const (
 	LevelDB DBType = iota
 	PogrebDB
 	BBoltDB
+	// FileDB preserves input order
+	FileDB
 )
 
 type Options struct {
@@ -102,6 +104,12 @@ func New(options Options) (*HybridMap, error) {
 				return nil, err
 			}
 			hm.diskmap = db
+		case FileDB:
+			db, err := disk.OpenFileDB(filepath.Join(diskmapPathm, "ff"))
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
 		case LevelDB:
 			fallthrough
 		default:
@@ -115,7 +123,7 @@ func New(options Options) (*HybridMap, error) {
 
 	if options.Type == Hybrid {
 		hm.memorymap.OnEvicted(func(k string, v interface{}) {
-			hm.diskmap.Set(k, v.([]byte), 0)
+			_ = hm.diskmap.Set(k, v.([]byte), 0)
 		})
 	}
 

@@ -126,7 +126,10 @@ func (ldb *LevelDB) get(k string) ([]byte, error) {
 	}
 
 	if delete {
-		ldb.db.Delete([]byte(k), nil)
+		errDelete := ldb.db.Delete([]byte(k), nil)
+		if errDelete != nil {
+			return data, errDelete
+		}
 		return data, ErrNotFound
 	}
 
