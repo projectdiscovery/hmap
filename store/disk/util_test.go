@@ -42,13 +42,16 @@ func utiltestOperations(t *testing.T, db DB, maxItems int, operations TestOperat
 	// scan
 	if operations.Scan {
 		read := 0
-		db.Scan(ScannerOptions{
+		err := db.Scan(ScannerOptions{
 			Handler: func(k, v []byte) error {
 				_, _ = k, v
 				read++
 				return nil
 			},
 		})
+		if err != nil {
+			t.Error(err)
+		}
 		if read != maxItems {
 			t.Errorf("[scan] got %d but wanted %d", read, maxItems)
 		}

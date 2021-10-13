@@ -11,17 +11,17 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	// wg.Add(1)
-	// go normal(&wg)
-	// wg.Add(1)
-	// go memoryExpire(&wg)
-	// wg.Add(1)
-	// go disk(&wg)
-	// wg.Add(1)
-	// go hybridz(&wg)
-	// wg.Wait()
 	wg.Add(1)
-	allDisks(&wg)
+	go normal(&wg)
+	wg.Add(1)
+	go memoryExpire(&wg)
+	wg.Add(1)
+	go disk(&wg)
+	wg.Add(1)
+	go hybridz(&wg)
+	wg.Wait()
+	wg.Add(1)
+	_ = allDisks(&wg)
 	wg.Wait()
 }
 
@@ -115,7 +115,7 @@ func hybridz(wg *sync.WaitGroup) {
 	log.Println("Writing 1M")
 	for i := 0; i < 1000000; i++ {
 		v := fmt.Sprintf("%d", i)
-		hm.Set(v, []byte(v))
+		_ = hm.Set(v, []byte(v))
 	}
 	log.Println("Finished writing 1M")
 
@@ -138,13 +138,6 @@ func allDisks(wg *sync.WaitGroup) error {
 	// leveldb
 	opts.DBType = hybrid.LevelDB
 	_, err := testhybrid("leveldb", opts, total)
-	if err != nil {
-		return err
-	}
-
-	// badger
-	opts.DBType = hybrid.BadgerDB
-	_, err = testhybrid("badger", opts, total)
 	if err != nil {
 		return err
 	}
