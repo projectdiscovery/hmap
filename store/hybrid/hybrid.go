@@ -146,6 +146,10 @@ func New(options Options) (*HybridMap, error) {
 func (hm *HybridMap) Close() error {
 	if hm.diskmap != nil {
 		hm.diskmap.Close()
+		// fix goleveldb memory leak reference:https://github.com/syndtr/goleveldb/issues/359
+		if hm.DBType == LevelDB {
+			hm.diskmap = nil
+		}
 	}
 	if hm.diskmapPath != "" && hm.options.Cleanup {
 		return os.RemoveAll(hm.diskmapPath)
