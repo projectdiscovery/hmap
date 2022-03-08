@@ -14,7 +14,8 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/projectdiscovery/fileutil v0.0.0-20220308101036-16c79af1cf5d
+	github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9
 	github.com/syndtr/goleveldb v1.0.0
 	go.etcd.io/bbolt v1.3.5
 	golang.org/x/net v0.0.0-20210414194228-064579744ee0 // indirect

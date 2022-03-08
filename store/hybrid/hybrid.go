@@ -2,13 +2,16 @@ package hybrid
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 
+	"github.com/projectdiscovery/fileutil"
 	"github.com/projectdiscovery/hmap/store/cache"
 	"github.com/projectdiscovery/hmap/store/disk"
+	"github.com/projectdiscovery/stringsutil"
 )
 
 type MapType int
@@ -41,6 +44,8 @@ type Options struct {
 	MemoryGuardTime      time.Duration
 	Path                 string
 	Cleanup              bool
+	// Remove temporary hmap in the temporary folder older than duration
+	RemoveOlderThan time.Duration
 }
 
 var DefaultOptions = Options{
@@ -54,9 +59,10 @@ var DefaultMemoryOptions = Options{
 }
 
 var DefaultDiskOptions = Options{
-	Type:    Disk,
-	DBType:  LevelDB,
-	Cleanup: true,
+	Type:            Disk,
+	DBType:          LevelDB,
+	Cleanup:         true,
+	RemoveOlderThan: 24 * time.Hour * 2, // at startup removes temporary dbs older than x days
 }
 
 var DefaultHybridOptions = Options{
@@ -75,6 +81,39 @@ type HybridMap struct {
 }
 
 func New(options Options) (*HybridMap, error) {
+	executableName := fileutil.ExecutableName()
+
+	// Due to potential system failures, the first operation is removing leftovers older than the defined duration
+	// if cleanup is true and a max age duration has been defined
+	if options.Cleanup && options.Path == "" && options.RemoveOlderThan > 0 {
+		targetCleanupDir := os.TempDir()
+		tmpFiles, err := os.ReadDir(targetCleanupDir)
+		if err != nil {
+			return nil, err
+		}
+		now := time.Now()
+		for _, tmpFile := range tmpFiles {
+			// discard non folders
+			if !tmpFile.IsDir() {
+				continue
+			}
+			// discard folders not containing the executable name
+			if !stringsutil.ContainsAny(tmpFile.Name(), executableName) {
+				continue
+			}
+
+			tmpFileInfo, err := tmpFile.Info()
+			if err != nil {
+				continue
+			}
+			modTime := tmpFileInfo.ModTime()
+			if now.Sub(modTime) > options.RemoveOlderThan {
+				targetFolderFullPath := filepath.Join(targetCleanupDir, tmpFileInfo.Name())
+				os.RemoveAll(targetFolderFullPath)
+			}
+		}
+	}
+
 	var hm HybridMap
 	if options.Type == Memory || options.Type == Hybrid {
 		hm.memorymap = cache.New(options.MemoryExpirationTime, options.JanitorTime)
@@ -84,10 +123,11 @@ func New(options Options) (*HybridMap, error) {
 		diskmapPathm := options.Path
 		if diskmapPathm == "" {
 			var err error
-			diskmapPathm, err = ioutil.TempDir("", "hm")
+			diskmapPathm, err = ioutil.TempDir("", executableName)
 			if err != nil {
 				return nil, err
 			}
+			log.Println("new path", diskmapPathm)
 		}
 
 		hm.diskmapPath = diskmapPathm
