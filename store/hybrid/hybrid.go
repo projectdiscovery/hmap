@@ -2,7 +2,6 @@ package hybrid
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -127,7 +126,6 @@ func New(options Options) (*HybridMap, error) {
 			if err != nil {
 				return nil, err
 			}
-			log.Println("new path", diskmapPathm)
 		}
 
 		hm.diskmapPath = diskmapPathm
