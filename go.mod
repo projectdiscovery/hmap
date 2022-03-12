@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
-	github.com/akrylysov/pogreb v0.10.0
+	github.com/akrylysov/pogreb v0.10.1
 	github.com/cockroachdb/pebble v0.0.0-20210728210723-48179f1d4dae
 	github.com/dgraph-io/badger v1.6.2
 	github.com/dgraph-io/ristretto v0.0.3 // indirect
