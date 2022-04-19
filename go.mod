@@ -8,6 +8,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/onsi/gomega v1.16.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/filekv v0.0.0-20210915124239-3467ef45dd08
 	github.com/projectdiscovery/fileutil v0.0.0-20220308101036-16c79af1cf5d
 	github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9
