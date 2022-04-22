@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/projectdiscovery/filekv"
+	"github.com/projectdiscovery/hmap/filekv"
 )
 
 // FileDB - represents a file db implementation
