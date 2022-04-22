@@ -112,8 +112,8 @@ func hybridz(wg *sync.WaitGroup) {
 		log.Println("Read1 (disk) Not found")
 	}
 
-	log.Println("Writing 1M")
-	for i := 0; i < 1000000; i++ {
+	log.Println("Writing 10k")
+	for i := 0; i < 10000; i++ {
 		v := fmt.Sprintf("%d", i)
 		_ = hm.Set(v, []byte(v))
 	}
@@ -132,7 +132,7 @@ func hybridz(wg *sync.WaitGroup) {
 func allDisks(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	total := 10000000
+	total := 10000
 
 	opts := hybrid.DefaultDiskOptions
 	// leveldb
