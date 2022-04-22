@@ -21,6 +21,6 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Build
-        run: go build .
-        working-directory: cmd/example/
+      - name: Build and Run
+        run: go run .
+        working-directory: cmd/example
