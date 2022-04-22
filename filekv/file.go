@@ -3,10 +3,9 @@ package filekv
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
-	"errors"
+	"compress/zlib"
+	"io"
 	"os"
-	"strings"
 	"sync"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -15,41 +14,40 @@ import (
 
 // FileDB - represents a file db implementation
 type FileDB struct {
-	stats   Stats
-	options Options
-	tmpDb   *os.File
-	db      *os.File
-	mdb     *lru.Cache
+	stats       Stats
+	options     Options
+	tmpDbName   string
+	tmpDb       *os.File
+	tmpDbWriter io.WriteCloser
+	db          *os.File
+	dbWriter    io.WriteCloser
+	mdb         *lru.Cache
 	sync.RWMutex
 }
 
 // Open a new file based db
 func Open(options Options) (*FileDB, error) {
-	var db *os.File
-	if fileutil.FileExists(options.Path) {
-		var err error
-		db, err = os.Open(options.Path)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		var err error
-		db, err = os.Create(options.Path)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	tmpDb, err := os.CreateTemp("", "")
+	db, err := os.OpenFile(options.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
 
-	fdb := &FileDB{}
+	tmpFileName, err := fileutil.GetTempFileName()
+	if err != nil {
+		return nil, err
+	}
+	tmpDb, err := os.Create(tmpFileName)
+	if err != nil {
+		return nil, err
+	}
 
-	fdb.options = options
-	fdb.db = db
-	fdb.tmpDb = tmpDb
+	fdb := &FileDB{
+		tmpDbName: tmpFileName,
+		options:   options,
+		db:        db,
+		tmpDb:     tmpDb,
+	}
+
 	if options.Dedupe {
 		fdb.mdb, err = lru.New(int(options.MaxItems))
 		if err != nil {
@@ -57,41 +55,90 @@ func Open(options Options) (*FileDB, error) {
 		}
 	}
 
+	if options.Compress {
+		fdb.tmpDbWriter = zlib.NewWriter(fdb.tmpDb)
+		fdb.dbWriter = zlib.NewWriter(fdb.db)
+	} else {
+		fdb.tmpDbWriter = fdb.tmpDb
+		fdb.dbWriter = fdb.db
+	}
+
 	return fdb, nil
 }
 
 // Process added files/slices/elements
 func (fdb *FileDB) Process() error {
-	if err := fdb.tmpDb.Sync(); err != nil {
-		return err
+	// Closes the temporary file
+	if fdb.options.Compress {
+		// close the writer
+		if err := fdb.tmpDbWriter.Close(); err != nil {
+			return err
+		}
 	}
-	if _, err := fdb.tmpDb.Seek(0, 0); err != nil {
+
+	// closes the file to flush to disk and reopen it
+	_ = fdb.tmpDb.Close()
+	var err error
+	fdb.tmpDb, err = os.Open(fdb.tmpDbName)
+	if err != nil {
 		return err
 	}
 
-	sc := bufio.NewScanner(fdb.tmpDb)
-	maxCapacity := 512 * 1024 * 1024
-	buf := make([]byte, maxCapacity)
-	sc.Buffer(buf, maxCapacity)
+	var tmpDbReader io.Reader
+	if fdb.options.Compress {
+		var err error
+		tmpDbReader, err = zlib.NewReader(fdb.tmpDb)
+		if err != nil {
+			return err
+		}
+	} else {
+		tmpDbReader = fdb.tmpDb
+	}
+
+	sc := bufio.NewScanner(tmpDbReader)
+	buf := make([]byte, BufferSize)
+	sc.Buffer(buf, BufferSize)
 	for sc.Scan() {
 		_ = fdb.Set(sc.Bytes(), nil)
 	}
+
+	fdb.tmpDb.Close()
+
+	// flush to disk
+	fdb.dbWriter.Close()
+	fdb.db.Close()
+
 	return nil
 }
 
 // Reset the db
 func (fdb *FileDB) Reset() error {
-	if _, err := fdb.tmpDb.Seek(0, 0); err != nil {
+	// clear the cache
+	if fdb.options.Dedupe {
+		fdb.mdb.Purge()
+	}
+
+	// reset the tmp file
+	fdb.tmpDb.Close()
+	var err error
+	fdb.tmpDb, err = os.Create(fdb.tmpDbName)
+	if err != nil {
 		return err
 	}
-	if err := fdb.tmpDb.Truncate(0); err != nil {
+
+	// reset the target file
+	fdb.db.Close()
+	fdb.db, err = os.Create(fdb.tmpDbName)
+	if err != nil {
 		return err
 	}
-	if _, err := fdb.db.Seek(0, 0); err != nil {
-		return err
-	}
-	if err := fdb.db.Truncate(0); err != nil {
-		return err
+
+	if fdb.options.Compress {
+		fdb.tmpDbWriter = zlib.NewWriter(fdb.tmpDb)
+		fdb.dbWriter = zlib.NewWriter(fdb.db)
+	} else {
+		fdb.tmpDbWriter = fdb.tmpDb
+		fdb.dbWriter = fdb.db
 	}
 
 	return nil
@@ -109,10 +156,10 @@ func (fdb *FileDB) Size() int64 {
 // Close ...
 func (fdb *FileDB) Close() {
 	tmpDBFilename := fdb.tmpDb.Name()
-	fdb.tmpDb.Close()
+	_ = fdb.tmpDb.Close()
 	os.RemoveAll(tmpDBFilename)
 
-	fdb.db.Close()
+	_ = fdb.db.Close()
 	dbFilename := fdb.db.Name()
 	if fdb.options.Cleanup {
 		os.RemoveAll(dbFilename)
@@ -120,12 +167,12 @@ func (fdb *FileDB) Close() {
 }
 
 func (fdb *FileDB) set(k, v []byte) error {
-	var s strings.Builder
+	var s bytes.Buffer
 	s.Write(k)
 	s.WriteString(Separator)
-	s.WriteString(string(v))
-	s.WriteString("\n")
-	_, err := fdb.db.WriteString(s.String())
+	s.Write(v)
+	s.WriteString(NewLine)
+	_, err := fdb.dbWriter.Write(s.Bytes())
 	if err != nil {
 		return err
 	}
@@ -136,10 +183,15 @@ func (fdb *FileDB) set(k, v []byte) error {
 func (fdb *FileDB) Set(k, v []byte) error {
 	// check for duplicates
 	if fdb.options.Dedupe {
-		if ok, _ := fdb.mdb.ContainsOrAdd(sha256.New().Sum(k), struct{}{}); ok {
+		if ok, _ := fdb.mdb.ContainsOrAdd(string(k), struct{}{}); ok {
 			fdb.stats.NumberOfDupedItems++
-			return errors.New("item already exist")
+			return ErrItemExists
 		}
+	}
+
+	if fdb.shouldSkip(k, v) {
+		fdb.stats.NumberOfFilteredItems++
+		return ErrItemFiltered
 	}
 
 	fdb.stats.NumberOfItems++
@@ -155,10 +207,19 @@ func (fdb *FileDB) Scan(handler func([]byte, []byte) error) error {
 	}
 	defer dbCopy.Close()
 
-	sc := bufio.NewScanner(dbCopy)
-	maxCapacity := 512 * 1024 * 1024
-	buf := make([]byte, maxCapacity)
-	sc.Buffer(buf, maxCapacity)
+	var dbReader io.ReadCloser
+	if fdb.options.Compress {
+		dbReader, err = zlib.NewReader(dbCopy)
+		if err != nil {
+			return err
+		}
+	} else {
+		dbReader = dbCopy
+	}
+
+	sc := bufio.NewScanner(dbReader)
+	buf := make([]byte, BufferSize)
+	sc.Buffer(buf, BufferSize)
 	for sc.Scan() {
 		tokens := bytes.SplitN(sc.Bytes(), []byte(Separator), 2)
 		var k, v []byte
