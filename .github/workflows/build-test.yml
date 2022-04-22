@@ -21,6 +21,10 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Build and Run
+      - name: Test Hybrid Hmap
         run: go run .
         working-directory: cmd/example
+        
+      - name: Test FileKv
+        run: go run .
+        working-directory: cmd/filekv
