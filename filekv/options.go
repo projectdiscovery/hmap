@@ -6,16 +6,18 @@ var (
 	BufferSize = 50 * 1024 * 1024 // 50Mb
 	Separator  = ";;;"
 	NewLine    = "\n"
+	FpRatio    = 0.0001
+	MaxItems   = uint(math.MaxInt32)
 )
 
 type Options struct {
 	Path           string
-	Dedupe         bool
 	Compress       bool
 	MaxItems       uint
 	Cleanup        bool
 	SkipEmpty      bool
 	FilterCallback func(k, v []byte) bool
+	Dedupe         Strategy
 }
 
 type Stats struct {
@@ -26,8 +28,7 @@ type Stats struct {
 }
 
 var DefaultOptions Options = Options{
-	Dedupe:   true,
 	Compress: false,
-	MaxItems: math.MaxInt16,
 	Cleanup:  true,
+	Dedupe:   MemoryLRU,
 }

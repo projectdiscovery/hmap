@@ -8,8 +8,10 @@ import (
 	"os"
 	"sync"
 
+	"github.com/bits-and-blooms/bloom/v3"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/projectdiscovery/fileutil"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // FileDB - represents a file db implementation
@@ -21,7 +23,14 @@ type FileDB struct {
 	tmpDbWriter io.WriteCloser
 	db          *os.File
 	dbWriter    io.WriteCloser
-	mdb         *lru.Cache
+
+	// todo: refactor into independent package
+	mapdb   map[string]struct{}
+	mdb     *lru.Cache         // lru cache
+	bdb     *bloom.BloomFilter // bloom filter
+	ddb     *leveldb.DB        // disk based filter
+	ddbName string
+
 	sync.RWMutex
 }
 
@@ -46,13 +55,6 @@ func Open(options Options) (*FileDB, error) {
 		options:   options,
 		db:        db,
 		tmpDb:     tmpDb,
-	}
-
-	if options.Dedupe {
-		fdb.mdb, err = lru.New(int(options.MaxItems))
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if options.Compress {
@@ -84,6 +86,39 @@ func (fdb *FileDB) Process() error {
 		return err
 	}
 
+	var maxItems uint
+	switch {
+	case fdb.options.MaxItems > 0:
+		maxItems = fdb.options.MaxItems
+	case fdb.stats.NumberOfAddedItems < MaxItems:
+		maxItems = fdb.stats.NumberOfAddedItems
+	default:
+		maxItems = MaxItems
+	}
+
+	// size the filter according to the number of input items
+	switch fdb.options.Dedupe {
+	case MemoryMap:
+		fdb.mapdb = make(map[string]struct{}, maxItems)
+	case MemoryLRU:
+		fdb.mdb, err = lru.New(int(maxItems))
+		if err != nil {
+			return err
+		}
+	case MemoryFilter:
+		fdb.bdb = bloom.NewWithEstimates(maxItems, FpRatio)
+	case DiskFilter:
+		// using executable name so the same app using hmap will remove the files after a certain amount of time
+		fdb.ddbName, err = os.MkdirTemp("", fileutil.ExecutableName())
+		if err != nil {
+			return err
+		}
+		fdb.ddb, err = leveldb.OpenFile(fdb.ddbName, nil)
+		if err != nil {
+			return err
+		}
+	}
+
 	var tmpDbReader io.Reader
 	if fdb.options.Compress {
 		var err error
@@ -108,14 +143,41 @@ func (fdb *FileDB) Process() error {
 	fdb.dbWriter.Close()
 	fdb.db.Close()
 
+	// cleanup filters
+	switch fdb.options.Dedupe {
+	case MemoryMap:
+		fdb.mapdb = nil
+	case MemoryLRU:
+		fdb.mdb.Purge()
+	case MemoryFilter:
+		fdb.bdb.ClearAll()
+	case DiskFilter:
+		fdb.ddb.Close()
+		os.RemoveAll(fdb.ddbName)
+	}
+
 	return nil
 }
 
 // Reset the db
 func (fdb *FileDB) Reset() error {
 	// clear the cache
-	if fdb.options.Dedupe {
+	switch fdb.options.Dedupe {
+	case MemoryMap:
+		fdb.mapdb = nil
+	case MemoryLRU:
 		fdb.mdb.Purge()
+	case MemoryFilter:
+		fdb.bdb.ClearAll()
+	case DiskFilter:
+		// close - remove - reopen
+		fdb.ddb.Close()
+		os.RemoveAll(fdb.ddbName)
+		var err error
+		fdb.ddb, err = leveldb.OpenFile(fdb.ddbName, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	// reset the tmp file
@@ -164,6 +226,11 @@ func (fdb *FileDB) Close() {
 	if fdb.options.Cleanup {
 		os.RemoveAll(dbFilename)
 	}
+
+	if fdb.ddbName != "" {
+		fdb.ddb.Close()
+		os.RemoveAll(fdb.ddbName)
+	}
 }
 
 func (fdb *FileDB) set(k, v []byte) error {
@@ -182,10 +249,29 @@ func (fdb *FileDB) set(k, v []byte) error {
 
 func (fdb *FileDB) Set(k, v []byte) error {
 	// check for duplicates
-	if fdb.options.Dedupe {
+	switch fdb.options.Dedupe {
+	case MemoryMap:
+		if _, ok := fdb.mapdb[string(k)]; ok {
+			fdb.stats.NumberOfDupedItems++
+			return ErrItemExists
+		}
+		fdb.mapdb[string(k)] = struct{}{}
+	case MemoryLRU:
 		if ok, _ := fdb.mdb.ContainsOrAdd(string(k), struct{}{}); ok {
 			fdb.stats.NumberOfDupedItems++
 			return ErrItemExists
+		}
+	case MemoryFilter:
+		if ok := fdb.bdb.TestOrAdd(k); ok {
+			fdb.stats.NumberOfDupedItems++
+			return ErrItemExists
+		}
+	case DiskFilter:
+		if ok, err := fdb.ddb.Has(k, nil); err == nil && ok {
+			fdb.stats.NumberOfDupedItems++
+			return ErrItemExists
+		} else if err == nil && !ok {
+			_ = fdb.ddb.Put(k, []byte{}, nil)
 		}
 	}
 
