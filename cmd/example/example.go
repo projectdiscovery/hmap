@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/projectdiscovery/hmap/store/hybrid"
 )
 
@@ -151,6 +152,7 @@ func allDisks(wg *sync.WaitGroup) error {
 
 	// bbolt
 	opts.DBType = hybrid.BBoltDB
+	opts.Name = "test"
 	_, err = testhybrid("bbolt", opts, total)
 	if err != nil {
 		return err
@@ -182,7 +184,10 @@ func testhybrid(name string, opts hybrid.Options, total int) (duration time.Dura
 	// scan
 	read := 0
 	hm.Scan(func(k, v []byte) error {
-		_, _ = k, v
+		gotValue := string(v)
+		if "test" != gotValue {
+			return errors.New("unexpected item")
+		}
 		read++
 		return nil
 	})

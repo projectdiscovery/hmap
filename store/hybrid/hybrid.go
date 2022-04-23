@@ -43,6 +43,7 @@ type Options struct {
 	MemoryGuardTime      time.Duration
 	Path                 string
 	Cleanup              bool
+	Name                 string
 	// Remove temporary hmap in the temporary folder older than duration
 	RemoveOlderThan time.Duration
 }
@@ -141,6 +142,7 @@ func New(options Options) (*HybridMap, error) {
 			if err != nil {
 				return nil, err
 			}
+			db.BucketName = options.Name
 			hm.diskmap = db
 		case FileDB:
 			db, err := disk.OpenFileDB(filepath.Join(diskmapPathm, "ff"))
