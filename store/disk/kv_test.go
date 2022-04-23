@@ -59,10 +59,10 @@ func TestFileKV(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fkv.Merge([]string{"a", "b"}, []string{"b", "c"})
-	fkv.Process()
+	_, _ = fkv.Merge([]string{"a", "b"}, []string{"b", "c"})
+	_ = fkv.Process()
 	count := 0
-	fkv.Scan(func(b1, b2 []byte) error {
+	_ = fkv.Scan(func(b1, b2 []byte) error {
 		count++
 		return nil
 	})
