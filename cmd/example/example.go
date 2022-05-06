@@ -118,7 +118,7 @@ func hybridz(wg *sync.WaitGroup) {
 		v := fmt.Sprintf("%d", i)
 		_ = hm.Set(v, []byte(v))
 	}
-	log.Println("Finished writing 1M")
+	log.Println("Finished writing 10k")
 
 	time.Sleep(time.Duration(15) * time.Second)
 	// this should happen from memory again
@@ -175,6 +175,7 @@ func testhybrid(name string, opts hybrid.Options, total int) (duration time.Dura
 	written := 0
 	for i := 0; i < total; i++ {
 		if err = hm.Set(fmt.Sprint(i), []byte("test")); err != nil {
+			log.Fatal(err)
 			duration = time.Since(start)
 			return
 		}

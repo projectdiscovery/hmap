@@ -27,8 +27,6 @@ const (
 	LevelDB DBType = iota
 	PogrebDB
 	BBoltDB
-	// FileDB preserves input order
-	FileDB
 )
 
 type Options struct {
@@ -143,12 +141,6 @@ func New(options Options) (*HybridMap, error) {
 				return nil, err
 			}
 			db.BucketName = options.Name
-			hm.diskmap = db
-		case FileDB:
-			db, err := disk.OpenFileDB(filepath.Join(diskmapPathm, "ff"))
-			if err != nil {
-				return nil, err
-			}
 			hm.diskmap = db
 		case LevelDB:
 			fallthrough
