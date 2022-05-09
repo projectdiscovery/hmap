@@ -13,7 +13,7 @@ require (
 	github.com/projectdiscovery/fileutil v0.0.0-20220422142424-d67292d8b36f
 	github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
-	github.com/rs/xid v1.3.0
+	github.com/rs/xid v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
