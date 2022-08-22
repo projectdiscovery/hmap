@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/akrylysov/pogreb v0.10.1
-	github.com/bits-and-blooms/bloom/v3 v3.2.0
+	github.com/bits-and-blooms/bloom/v3 v3.3.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/kr/pretty v0.3.0 // indirect
