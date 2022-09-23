@@ -6,22 +6,23 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/projectdiscovery/hmap/store/hybrid"
 )
 
 func main() {
 	var wg sync.WaitGroup
-	// wg.Add(1)
-	// go normal(&wg)
-	// wg.Add(1)
-	// go memoryExpire(&wg)
-	// wg.Add(1)
-	// go disk(&wg)
-	// wg.Add(1)
-	// go hybridz(&wg)
-	// wg.Wait()
 	wg.Add(1)
-	allDisks(&wg)
+	go normal(&wg)
+	wg.Add(1)
+	go memoryExpire(&wg)
+	wg.Add(1)
+	go disk(&wg)
+	wg.Add(1)
+	go hybridz(&wg)
+	wg.Wait()
+	wg.Add(1)
+	_ = allDisks(&wg)
 	wg.Wait()
 }
 
@@ -112,12 +113,12 @@ func hybridz(wg *sync.WaitGroup) {
 		log.Println("Read1 (disk) Not found")
 	}
 
-	log.Println("Writing 1M")
-	for i := 0; i < 1000000; i++ {
+	log.Println("Writing 10k")
+	for i := 0; i < 10000; i++ {
 		v := fmt.Sprintf("%d", i)
-		hm.Set(v, []byte(v))
+		_ = hm.Set(v, []byte(v))
 	}
-	log.Println("Finished writing 1M")
+	log.Println("Finished writing 10k")
 
 	time.Sleep(time.Duration(15) * time.Second)
 	// this should happen from memory again
@@ -132,19 +133,12 @@ func hybridz(wg *sync.WaitGroup) {
 func allDisks(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	total := 10000000
+	total := 10000
 
 	opts := hybrid.DefaultDiskOptions
 	// leveldb
 	opts.DBType = hybrid.LevelDB
 	_, err := testhybrid("leveldb", opts, total)
-	if err != nil {
-		return err
-	}
-
-	// badger
-	opts.DBType = hybrid.BadgerDB
-	_, err = testhybrid("badger", opts, total)
 	if err != nil {
 		return err
 	}
@@ -158,6 +152,7 @@ func allDisks(wg *sync.WaitGroup) error {
 
 	// bbolt
 	opts.DBType = hybrid.BBoltDB
+	opts.Name = "test"
 	_, err = testhybrid("bbolt", opts, total)
 	if err != nil {
 		return err
@@ -187,6 +182,7 @@ func testhybrid(name string, opts hybrid.Options, total int) (duration time.Dura
 	written := 0
 	for i := 0; i < total; i++ {
 		if err = hm.Set(fmt.Sprint(i), []byte("test")); err != nil {
+			log.Fatal(err)
 			duration = time.Since(start)
 			return
 		}
@@ -196,7 +192,10 @@ func testhybrid(name string, opts hybrid.Options, total int) (duration time.Dura
 	// scan
 	read := 0
 	hm.Scan(func(k, v []byte) error {
-		_, _ = k, v
+		gotValue := string(v)
+		if "test" != gotValue {
+			return errors.New("unexpected item")
+		}
 		read++
 		return nil
 	})

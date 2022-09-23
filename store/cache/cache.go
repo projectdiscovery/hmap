@@ -85,20 +85,6 @@ func (c *CacheMemory) refresh(k string) bool {
 	return true
 }
 
-func (c *CacheMemory) get(k string) (interface{}, bool) {
-	item, found := c.Items[k]
-	if !found {
-		return nil, false
-	}
-	if item.Expiration > 0 {
-		if time.Now().UnixNano() > item.Expiration {
-			return nil, false
-		}
-	}
-	c.refresh(k)
-	return item.Object, true
-}
-
 func (c *CacheMemory) Delete(k string) {
 	c.mu.Lock()
 	v, evicted := c.delete(k)
@@ -150,7 +136,9 @@ func (c *CacheMemory) Scan(f func([]byte, []byte) error) {
 	defer c.mu.Unlock()
 
 	for k, item := range c.Items {
-		f([]byte(k), item.Object.([]byte))
+		if f([]byte(k), item.Object.([]byte)) != nil {
+			break
+		}
 	}
 }
 

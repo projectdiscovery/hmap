@@ -25,7 +25,6 @@ type DBType int
 
 const (
 	LevelDB DBType = iota
-	BadgerDB
 	PogrebDB
 	BBoltDB
 	PebbleDB
@@ -44,6 +43,7 @@ type Options struct {
 	MemoryGuardTime      time.Duration
 	Path                 string
 	Cleanup              bool
+	Name                 string
 	// Remove temporary hmap in the temporary folder older than duration
 	RemoveOlderThan time.Duration
 }
@@ -67,7 +67,7 @@ var DefaultDiskOptions = Options{
 
 var DefaultHybridOptions = Options{
 	Type:                 Hybrid,
-	DBType:               LevelDB,
+	DBType:               PogrebDB,
 	MemoryExpirationTime: time.Duration(5) * time.Minute,
 	JanitorTime:          time.Duration(1) * time.Minute,
 }
@@ -131,12 +131,6 @@ func New(options Options) (*HybridMap, error) {
 
 		hm.diskmapPath = diskmapPathm
 		switch options.DBType {
-		case BadgerDB:
-			db, err := disk.OpenBadgerDB(diskmapPathm)
-			if err != nil {
-				return nil, err
-			}
-			hm.diskmap = db
 		case PogrebDB:
 			db, err := disk.OpenPogrebDB(diskmapPathm)
 			if err != nil {
@@ -148,12 +142,7 @@ func New(options Options) (*HybridMap, error) {
 			if err != nil {
 				return nil, err
 			}
-			hm.diskmap = db
-		case PebbleDB:
-			db, err := disk.OpenPebbleDB(diskmapPathm)
-			if err != nil {
-				return nil, err
-			}
+			db.BucketName = options.Name
 			hm.diskmap = db
 		case BuntDB:
 			db, err := disk.OpenBuntDB(filepath.Join(diskmapPathm, "bunt"))
@@ -174,7 +163,7 @@ func New(options Options) (*HybridMap, error) {
 
 	if options.Type == Hybrid {
 		hm.memorymap.OnEvicted(func(k string, v interface{}) {
-			hm.diskmap.Set(k, v.([]byte), 0)
+			_ = hm.diskmap.Set(k, v.([]byte), 0)
 		})
 	}
 

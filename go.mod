@@ -1,28 +1,38 @@
 module github.com/projectdiscovery/hmap
 
-go 1.14
+go 1.18
 
 require (
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/akrylysov/pogreb v0.10.1
-	github.com/cockroachdb/pebble v0.0.0-20210728210723-48179f1d4dae
-	github.com/dgraph-io/badger v1.6.2
-	github.com/dgraph-io/ristretto v0.0.3 // indirect
-	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/kr/text v0.2.0 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/onsi/ginkgo v1.15.0 // indirect
-	github.com/onsi/gomega v1.10.5 // indirect
-	github.com/projectdiscovery/fileutil v0.0.0-20220308101036-16c79af1cf5d
+	github.com/bits-and-blooms/bloom/v3 v3.3.1
+	github.com/hashicorp/golang-lru v0.5.4
+	github.com/pkg/errors v0.9.1
+	github.com/projectdiscovery/fileutil v0.0.0-20220422142424-d67292d8b36f
 	github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9
+	github.com/rs/xid v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
+	github.com/tidwall/buntdb v1.2.10
+	go.etcd.io/bbolt v1.3.6
+)
+
+require (
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
+	github.com/bits-and-blooms/bitset v1.3.1 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
+	github.com/karrick/godirwalk v1.16.1 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
+	github.com/onsi/ginkgo v1.16.4 // indirect
+	github.com/onsi/gomega v1.16.0 // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/tidwall/btree v1.4.3 // indirect
-	github.com/tidwall/buntdb v1.2.10 // indirect
-	go.etcd.io/bbolt v1.3.5
-	golang.org/x/net v0.0.0-20210414194228-064579744ee0 // indirect
-	golang.org/x/sys v0.0.0-20210415045647-66c3f260301c // indirect
+	github.com/tidwall/gjson v1.14.3 // indirect
+	github.com/tidwall/grect v0.1.4 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/rtred v0.1.2 // indirect
+	github.com/tidwall/tinyqueue v0.1.1 // indirect
+	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
+	golang.org/x/sys v0.0.0-20210915083310-ed5796bab164 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

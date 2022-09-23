@@ -101,7 +101,7 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 	}
 
 	if len(item) == 0 {
-		return []byte{}, nil
+		return []byte{}, ErrNotFound
 	}
 
 	parts := bytes.SplitN(item, []byte(expSeparator), 2)
@@ -109,15 +109,16 @@ func (pdb *PogrebDB) get(k string) ([]byte, error) {
 
 	if exp, _ := strconv.Atoi(string(expires)); exp > 0 && int(time.Now().Unix()) >= exp {
 		delete = true
-	} else {
-		data = actual
 	}
+	data = actual
 
 	if delete {
-		pdb.db.Delete([]byte(k))
+		errDelete := pdb.db.Delete([]byte(k))
+		if errDelete != nil {
+			return data, errDelete
+		}
 		return data, ErrNotFound
 	}
-
 	return data, nil
 }
 
@@ -194,7 +195,9 @@ func (pdb *PogrebDB) Scan(scannerOpt ScannerOptions) error {
 		if err != nil {
 			return err
 		}
-		if !valid(key) || scannerOpt.Handler(key, val) != nil {
+		parts := bytes.SplitN(val, []byte(expSeparator), 2)
+		_, data := parts[0], parts[1]
+		if !valid(key) || scannerOpt.Handler(key, data) != nil {
 			break
 		}
 	}
