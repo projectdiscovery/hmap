@@ -103,7 +103,7 @@ func (bdb *BuntDB) Get(k string) ([]byte, error) {
 // MGet - fetch multiple values of the specified keys
 func (bdb *BuntDB) MGet(keys []string) [][]byte {
 	var data [][]byte
-	bdb.db.View(func(tx *buntdb.Tx) error {
+	_ = bdb.db.View(func(tx *buntdb.Tx) error {
 		for _, k := range keys {
 			val, err := tx.Get(k)
 			if err != nil {
@@ -120,7 +120,7 @@ func (bdb *BuntDB) MGet(keys []string) [][]byte {
 // TTL - returns the time to live of the specified key's value
 func (bdb *BuntDB) TTL(key string) int64 {
 	var ttl int64
-	bdb.db.View(func(tx *buntdb.Tx) error {
+	_ = bdb.db.View(func(tx *buntdb.Tx) error {
 		d, err := tx.TTL(key)
 		if err != nil {
 			return err

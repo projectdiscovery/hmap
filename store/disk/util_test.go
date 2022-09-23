@@ -3,7 +3,6 @@ package disk
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -69,7 +68,7 @@ func utiltestOperations(t *testing.T, db DB, maxItems int, operations TestOperat
 }
 
 func utiltestGetPath(t *testing.T) (string, error) {
-	tmpdir, err := ioutil.TempDir(os.TempDir(), "hmaptest")
+	tmpdir, err := os.MkdirTemp("", "hmaptest")
 	if err != nil {
 		t.Error(err)
 	}
