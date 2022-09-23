@@ -158,6 +158,13 @@ func allDisks(wg *sync.WaitGroup) error {
 		return err
 	}
 
+	// buntdb
+	opts.DBType = hybrid.BuntDB
+	_, err = testhybrid("buntdb", opts, total)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

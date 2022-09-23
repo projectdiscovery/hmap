@@ -1,7 +1,6 @@
 package hybrid
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -27,6 +26,8 @@ const (
 	LevelDB DBType = iota
 	PogrebDB
 	BBoltDB
+	PebbleDB
+	BuntDB
 )
 
 type Options struct {
@@ -121,7 +122,7 @@ func New(options Options) (*HybridMap, error) {
 		diskmapPathm := options.Path
 		if diskmapPathm == "" {
 			var err error
-			diskmapPathm, err = ioutil.TempDir("", executableName)
+			diskmapPathm, err = os.MkdirTemp("", executableName)
 			if err != nil {
 				return nil, err
 			}
@@ -141,6 +142,12 @@ func New(options Options) (*HybridMap, error) {
 				return nil, err
 			}
 			db.BucketName = options.Name
+			hm.diskmap = db
+		case BuntDB:
+			db, err := disk.OpenBuntDB(filepath.Join(diskmapPathm, "bunt"))
+			if err != nil {
+				return nil, err
+			}
 			hm.diskmap = db
 		case LevelDB:
 			fallthrough
