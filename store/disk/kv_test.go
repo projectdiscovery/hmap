@@ -53,4 +53,14 @@ func TestKV(t *testing.T) {
 	}
 	utiltestOperations(t, db, 100)
 	utiltestRemoveDb(t, db, dbpath)
+
+	// buntdb
+	dbpath, _ = utiltestGetPath(t)
+	dbpath = filepath.Join(dbpath, "buntdb")
+	db, err = OpenBuntDB(dbpath)
+	if err != nil {
+		t.Error(err)
+	}
+	utiltestOperations(t, db, 100)
+	utiltestRemoveDb(t, db, dbpath)
 }

@@ -29,6 +29,7 @@ const (
 	PogrebDB
 	BBoltDB
 	PebbleDB
+	BuntDB
 )
 
 type Options struct {
@@ -150,6 +151,12 @@ func New(options Options) (*HybridMap, error) {
 			hm.diskmap = db
 		case PebbleDB:
 			db, err := disk.OpenPebbleDB(diskmapPathm)
+			if err != nil {
+				return nil, err
+			}
+			hm.diskmap = db
+		case BuntDB:
+			db, err := disk.OpenBuntDB(filepath.Join(diskmapPathm, "bunt"))
 			if err != nil {
 				return nil, err
 			}
