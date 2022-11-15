@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/akrylysov/pogreb v0.10.1
 	github.com/bits-and-blooms/bloom/v3 v3.3.1
-	github.com/hashicorp/golang-lru v0.5.4
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/fileutil v0.0.0-20220422142424-d67292d8b36f
 	github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9
