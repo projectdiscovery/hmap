@@ -177,7 +177,7 @@ func New(options Options) (*HybridMap, error) {
 }
 
 func (hm *HybridMap) Close() error {
-	if hm.diskmap != nil {
+	if hm.diskmap != (disk.DB)(nil) {
 		hm.diskmap.Close()
 	}
 	if hm.diskmapPath != "" && hm.options.Cleanup {
@@ -262,7 +262,7 @@ func (hm *HybridMap) Size() int64 {
 	if hm.memorymap != nil {
 		count += int64(hm.memorymap.ItemCount())
 	}
-	if hm.diskmap != nil {
+	if hm.diskmap != (disk.DB)(nil) {
 		count += hm.diskmap.Size()
 	}
 	return count
