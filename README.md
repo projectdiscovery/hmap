@@ -1,6 +1,6 @@
 # hmap
 
-Hybrid memory/disk map that helps you to manage key value storage
+Hybrid memory/disk map that helps you to manage key value storage for input deduplication.
 
 Available functions:
 |Name|Declaration/Params/Return|
@@ -13,6 +13,52 @@ Available functions:
 |Scan|func (hm *HybridMap) Scan(f func([]byte, []byte) error){}|
 |Size|func (hm *HybridMap) Size() int64{}|
 |TuneMemory|func (hm *HybridMap) TuneMemory(){}|
+
+Available options:
+
+```go
+const (
+	Memory MapType = iota
+	Disk
+	Hybrid
+)
+
+type DBType int
+
+const (
+	LevelDB DBType = iota
+	PogrebDB
+	BBoltDB
+	PebbleDB
+	BuntDB
+)
+```
+
+|Name|Props|
+|-|-|
+|`DefaultOptions`|- Type: Memory<br>- MemoryExpirationTime: time.Duration(5) * time.Minute<br>- JanitorTime:          time.Duration(1) * time.Minute|
+|`DefaultMemoryOptions`|- Type: Memory|
+|`DefaultDiskOptions`|- Type: Disk<br>- DBType: LevelDB<br>- Cleanup: true<br>- RemoveOlderThan: 24* time.Hour *2|
+|`DefaultDiskOptions`|- Type: Hybrid<br>- DBType: PogrebDB<br>- MemoryExpirationTime: time.Duration(5) * time.Minute<br>- JanitorTime: time.Duration(1) * time.Minute|
+
+Custom options:
+```go
+type Options struct {
+	MemoryExpirationTime time.Duration
+	DiskExpirationTime   time.Duration
+	JanitorTime          time.Duration
+	Type                 MapType
+	DBType               DBType
+	MemoryGuardForceDisk bool
+	MemoryGuard          bool
+	MaxMemorySize        int
+	MemoryGuardTime      time.Duration
+	Path                 string
+	Cleanup              bool
+	Name                 string
+	RemoveOlderThan time.Duration
+}
+```
 
 ## Simple usage example
 
