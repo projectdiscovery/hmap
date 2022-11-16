@@ -6,10 +6,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/projectdiscovery/fileutil"
 	"github.com/projectdiscovery/hmap/store/cache"
 	"github.com/projectdiscovery/hmap/store/disk"
-	"github.com/projectdiscovery/stringsutil"
+	fileutil "github.com/projectdiscovery/utils/file"
+	stringsutil "github.com/projectdiscovery/utils/strings"
 )
 
 type MapType int

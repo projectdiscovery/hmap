@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/projectdiscovery/fileutil"
 	"github.com/projectdiscovery/hmap/filekv"
+	fileutil "github.com/projectdiscovery/utils/file"
 )
 
 func main() {

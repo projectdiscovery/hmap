@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/bits-and-blooms/bloom/v3"
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/projectdiscovery/fileutil"
+	lru "github.com/hashicorp/golang-lru/v2"
+	fileutil "github.com/projectdiscovery/utils/file"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -26,9 +26,9 @@ type FileDB struct {
 
 	// todo: refactor into independent package
 	mapdb   map[string]struct{}
-	mdb     *lru.Cache         // lru cache
-	bdb     *bloom.BloomFilter // bloom filter
-	ddb     *leveldb.DB        // disk based filter
+	mdb     *lru.Cache[string, struct{}] // lru cache
+	bdb     *bloom.BloomFilter           // bloom filter
+	ddb     *leveldb.DB                  // disk based filter
 	ddbName string
 
 	sync.RWMutex
@@ -101,7 +101,7 @@ func (fdb *FileDB) Process() error {
 	case MemoryMap:
 		fdb.mapdb = make(map[string]struct{}, maxItems)
 	case MemoryLRU:
-		fdb.mdb, err = lru.New(int(maxItems))
+		fdb.mdb, err = lru.New[string, struct{}](int(maxItems))
 		if err != nil {
 			return err
 		}

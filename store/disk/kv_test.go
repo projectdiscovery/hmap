@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/projectdiscovery/fileutil"
 	"github.com/projectdiscovery/hmap/filekv"
+	fileutil "github.com/projectdiscovery/utils/file"
 )
 
 func TestKV(t *testing.T) {
