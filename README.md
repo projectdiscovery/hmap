@@ -2,7 +2,10 @@
 
 Hybrid memory/disk map that helps you to manage key value storage for input deduplication.
 
+---
+
 Available functions:
+
 |Name|Declaration/Params/Return|
 |-|-|
 |New|func New(options Options) (*HybridMap, error){}|
@@ -60,7 +63,7 @@ type Options struct {
 }
 ```
 
-## Simple usage example
+# Simple usage example
 
 ```go
 func main() {
@@ -87,3 +90,6 @@ func normal(wg *sync.WaitGroup) {
 	}
 }
 ```
+
+# License
+hmap is distributed under MIT License
