@@ -1,6 +1,18 @@
 # hmap
 
-Hybrid memory/disk map
+Hybrid memory/disk map that helps you to manage key value storage
+
+Available functions:
+|Name|Declaration/Params/Return|
+|-|-|
+|New|func New(options Options) (*HybridMap, error){}|
+|Close|func (hm *HybridMap) Close() error{}|
+|Set|func (hm *HybridMap) Set(k string, v []byte) error{}|
+|Get|func (hm *HybridMap) Get(k string) ([]byte, bool){}|
+|Del|func (hm *HybridMap) Del(key string) error{}|
+|Scan|func (hm *HybridMap) Scan(f func([]byte, []byte) error){}|
+|Size|func (hm *HybridMap) Size() int64{}|
+|TuneMemory|func (hm *HybridMap) TuneMemory(){}|
 
 ## Simple usage example
 
