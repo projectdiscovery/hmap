@@ -28,7 +28,8 @@ type Stats struct {
 }
 
 var DefaultOptions Options = Options{
-	Compress: false,
-	Cleanup:  true,
-	Dedupe:   MemoryLRU,
+	Compress:  false,
+	Cleanup:   true,
+	Dedupe:    MemoryLRU,
+	SkipEmpty: true,
 }
