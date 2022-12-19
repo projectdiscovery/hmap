@@ -11,6 +11,17 @@ func (f *FileDB) Merge(items ...interface{}) (uint, error) {
 	var count uint
 	for _, item := range items {
 		switch itemData := item.(type) {
+		case [][]byte:
+			for _, data := range itemData {
+				if _, err := f.tmpDbWriter.Write(data); err != nil {
+					return 0, err
+				}
+				if _, err := f.tmpDbWriter.Write([]byte(NewLine)); err != nil {
+					return 0, err
+				}
+				count++
+				f.stats.NumberOfAddedItems++
+			}
 		case []string:
 			for _, data := range itemData {
 				_, err := f.tmpDbWriter.Write([]byte(data + NewLine))
@@ -38,8 +49,8 @@ func (f *FileDB) Merge(items ...interface{}) (uint, error) {
 }
 
 func (f *FileDB) shouldSkip(k, v []byte) bool {
-	if f.options.SkipEmpty {
-		return len(k) == 0
+	if f.options.SkipEmpty && len(k) == 0 {
+		return true
 	}
 
 	if f.options.FilterCallback != nil {
