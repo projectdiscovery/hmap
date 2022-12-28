@@ -3,10 +3,13 @@ package disk
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/projectdiscovery/hmap/filekv"
 	fileutil "github.com/projectdiscovery/utils/file"
+	stringsutil "github.com/projectdiscovery/utils/strings"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKV(t *testing.T) {
@@ -21,9 +24,7 @@ func TestKV(t *testing.T) {
 	dbpath, _ := utiltestGetPath(t)
 	dbpath = filepath.Join(dbpath, "boltdb")
 	db, err := OpenBoltDBB(dbpath)
-	if err != nil {
-		t.Error(err)
-	}
+	require.Nil(t, err)
 	db.(*BBoltDB).BucketName = "test"
 	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
@@ -31,8 +32,10 @@ func TestKV(t *testing.T) {
 	// pogreb
 	dbpath, _ = utiltestGetPath(t)
 	db, err = OpenPogrebDB(dbpath)
-	if err != nil {
-		t.Error(err)
+	if runtime.GOOS == "windows" && stringsutil.EqualFoldAny(runtime.GOARCH, "arm", "arm64") {
+		require.ErrorIs(t, ErrNotSupported, err)
+	} else {
+		require.Nil(t, err)
 	}
 	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
@@ -40,9 +43,7 @@ func TestKV(t *testing.T) {
 	// leveldb
 	dbpath, _ = utiltestGetPath(t)
 	db, err = OpenLevelDB(dbpath)
-	if err != nil {
-		t.Error(err)
-	}
+	require.Nil(t, err)
 	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 
@@ -50,9 +51,7 @@ func TestKV(t *testing.T) {
 	dbpath, _ = utiltestGetPath(t)
 	dbpath = filepath.Join(dbpath, "buntdb")
 	db, err = OpenBuntDB(dbpath)
-	if err != nil {
-		t.Error(err)
-	}
+	require.Nil(t, err)
 	utiltestOperations(t, db, 100, testOperations)
 	utiltestRemoveDb(t, db, dbpath)
 }
@@ -66,9 +65,7 @@ func TestFileKV(t *testing.T) {
 	opts.Path = dbpath
 
 	fkv, err := filekv.Open(opts)
-	if err != nil {
-		t.Error(err)
-	}
+	require.Nil(t, err)
 	_, _ = fkv.Merge([]string{"a", "b"}, []string{"b", "c"})
 	_ = fkv.Process()
 	count := 0
@@ -76,7 +73,5 @@ func TestFileKV(t *testing.T) {
 		count++
 		return nil
 	})
-	if count != 3 {
-		t.Errorf("wanted 3 but got %d", count)
-	}
+	require.Equalf(t, 3, count, "wanted 3 but got %d", count)
 }
