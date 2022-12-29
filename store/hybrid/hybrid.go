@@ -131,6 +131,9 @@ func New(options Options) (*HybridMap, error) {
 		hm.diskmapPath = diskmapPathm
 		switch options.DBType {
 		case PogrebDB:
+			if disk.OpenPogrebDB == nil {
+				return nil, disk.ErrNotSupported
+			}
 			db, err := disk.OpenPogrebDB(diskmapPathm)
 			if err != nil {
 				return nil, err

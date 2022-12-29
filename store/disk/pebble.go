@@ -15,7 +15,7 @@ type PebbleDB struct {
 	sync.RWMutex
 }
 
-// OpenPogrebDB - Opens the specified path
+// OpenPebbleDB - Opens the specified path
 func OpenPebbleDB(path string) (*PebbleDB, error) {
 	db, err := pebble.Open(path, &pebble.Options{})
 	if err != nil {

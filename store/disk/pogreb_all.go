@@ -1,3 +1,5 @@
+//go:build !((arm || arm64) && windows)
+
 package disk
 
 import (
@@ -9,6 +11,10 @@ import (
 	"github.com/akrylysov/pogreb"
 )
 
+func init() {
+	OpenPogrebDB = openPogrebDB
+}
+
 // PogrebDB - represents a pogreb db implementation
 type PogrebDB struct {
 	db *pogreb.DB
@@ -16,7 +22,7 @@ type PogrebDB struct {
 }
 
 // OpenPogrebDB - Opens the specified path
-func OpenPogrebDB(path string) (*PogrebDB, error) {
+func openPogrebDB(path string) (DB, error) {
 	db, err := pogreb.Open(path, nil)
 	if err != nil {
 		return nil, err
