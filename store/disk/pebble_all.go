@@ -1,3 +1,5 @@
+//go:build !386
+
 package disk
 
 import (
@@ -9,14 +11,18 @@ import (
 	"github.com/cockroachdb/pebble"
 )
 
+func init() {
+	OpenPebbleDB = openPebbleDB
+}
+
 // PebbleDB - represents a pebble db implementation
 type PebbleDB struct {
 	db *pebble.DB
 	sync.RWMutex
 }
 
-// OpenPebbleDB - Opens the specified path
-func OpenPebbleDB(path string) (*PebbleDB, error) {
+// openPebbleDB - Opens the specified path
+func openPebbleDB(path string) (DB, error) {
 	db, err := pebble.Open(path, &pebble.Options{})
 	if err != nil {
 		return nil, err
