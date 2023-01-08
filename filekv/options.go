@@ -1,13 +1,11 @@
 package filekv
 
-import "math"
-
 var (
 	BufferSize = 50 * 1024 * 1024 // 50Mb
 	Separator  = ";;;"
 	NewLine    = "\n"
 	FpRatio    = 0.0001
-	MaxItems   = uint(math.MaxInt32)
+	MaxItems   = uint(250000)
 )
 
 type Options struct {
