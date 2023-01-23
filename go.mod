@@ -8,7 +8,7 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20221229212011-811a8c0e741b
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/utils v0.0.3
+	github.com/projectdiscovery/utils v0.0.5
 	github.com/rs/xid v1.4.0
 	github.com/stretchr/testify v1.8.1
 	github.com/syndtr/goleveldb v1.0.0
