@@ -197,7 +197,7 @@ func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[string]Item) 
 	if ci > 0 {
 		runJanitor(c, ci)
 		runtime.SetFinalizer(w, func(c *CacheMemoryWrapper) {
-			c.janitor.stop <- true
+			stopJanitor(c.CacheMemory)
 		})
 	}
 	return w
