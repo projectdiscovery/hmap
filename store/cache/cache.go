@@ -185,20 +185,29 @@ func newCache(de time.Duration, m map[string]Item) *CacheMemory {
 	return c
 }
 
-func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[string]Item) *CacheMemory {
-	c := newCache(de, m)
-	if ci > 0 {
-		runJanitor(c, ci)
-		runtime.SetFinalizer(c, stopJanitor)
-	}
-	return c
+type CacheMemoryWrapper struct {
+	*CacheMemory
 }
 
-func New(defaultExpiration, cleanupInterval time.Duration) *CacheMemory {
+func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[string]Item) *CacheMemoryWrapper {
+	c := newCache(de, m)
+	w := &CacheMemoryWrapper{
+		CacheMemory: c,
+	}
+	if ci > 0 {
+		runJanitor(c, ci)
+		runtime.SetFinalizer(w, func(c *CacheMemoryWrapper) {
+			c.janitor.stop <- true
+		})
+	}
+	return w
+}
+
+func New(defaultExpiration, cleanupInterval time.Duration) *CacheMemoryWrapper {
 	items := make(map[string]Item)
 	return newCacheWithJanitor(defaultExpiration, cleanupInterval, items)
 }
 
-func NewFrom(defaultExpiration, cleanupInterval time.Duration, items map[string]Item) *CacheMemory {
+func NewFrom(defaultExpiration, cleanupInterval time.Duration, items map[string]Item) *CacheMemoryWrapper {
 	return newCacheWithJanitor(defaultExpiration, cleanupInterval, items)
 }
