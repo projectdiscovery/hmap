@@ -185,11 +185,18 @@ func newCache(de time.Duration, m map[string]Item) *CacheMemory {
 	return c
 }
 
+type finalizerWrapper struct {
+	*CacheMemory
+}
+
 func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[string]Item) *CacheMemory {
 	c := newCache(de, m)
 	if ci > 0 {
 		runJanitor(c, ci)
-		runtime.SetFinalizer(c, stopJanitor)
+		wrapper := &finalizerWrapper{CacheMemory: c}
+		runtime.SetFinalizer(wrapper, func(w *finalizerWrapper) {
+			stopJanitor(w.CacheMemory)
+		})
 	}
 	return c
 }
