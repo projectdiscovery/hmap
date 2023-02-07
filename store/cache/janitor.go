@@ -9,7 +9,7 @@ type janitor struct {
 	stop     chan struct{}
 }
 
-func (j *janitor) Run(c *CacheMemory) {
+func (j *janitor) Run(c *cacheMemory) {
 	ticker := time.NewTicker(j.Interval)
 	for {
 		select {
@@ -22,11 +22,11 @@ func (j *janitor) Run(c *CacheMemory) {
 	}
 }
 
-func stopJanitor(c *CacheMemory) {
+func stopJanitor(c *cacheMemory) {
 	c.janitor.stop <- struct{}{}
 }
 
-func runJanitor(c *CacheMemory, ci time.Duration) {
+func runJanitor(c *cacheMemory, ci time.Duration) {
 	j := &janitor{
 		Interval: ci,
 		stop:     make(chan struct{}),

@@ -24,6 +24,10 @@ type Cache interface {
 }
 
 type CacheMemory struct {
+	*cacheMemory
+}
+
+type cacheMemory struct {
 	DefaultExpiration time.Duration
 	Items             map[string]Item
 	mu                sync.RWMutex
@@ -31,13 +35,13 @@ type CacheMemory struct {
 	janitor           *janitor
 }
 
-func (c *CacheMemory) SetWithExpiration(k string, x interface{}, d time.Duration) {
+func (c *cacheMemory) SetWithExpiration(k string, x interface{}, d time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.set(k, x, d)
 }
 
-func (c *CacheMemory) set(k string, x interface{}, d time.Duration) {
+func (c *cacheMemory) set(k string, x interface{}, d time.Duration) {
 	var e int64
 	if d == DefaultExpiration {
 		d = c.DefaultExpiration
@@ -51,11 +55,11 @@ func (c *CacheMemory) set(k string, x interface{}, d time.Duration) {
 	}
 }
 
-func (c *CacheMemory) Set(k string, x interface{}) {
+func (c *cacheMemory) Set(k string, x interface{}) {
 	c.SetWithExpiration(k, x, c.DefaultExpiration)
 }
 
-func (c *CacheMemory) Get(k string) (interface{}, bool) {
+func (c *cacheMemory) Get(k string) (interface{}, bool) {
 	c.mu.RLock()
 	item, found := c.Items[k]
 	if !found {
@@ -73,7 +77,7 @@ func (c *CacheMemory) Get(k string) (interface{}, bool) {
 	return item.Object, true
 }
 
-func (c *CacheMemory) refresh(k string) bool {
+func (c *cacheMemory) refresh(k string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -85,7 +89,7 @@ func (c *CacheMemory) refresh(k string) bool {
 	return true
 }
 
-func (c *CacheMemory) Delete(k string) {
+func (c *cacheMemory) Delete(k string) {
 	c.mu.Lock()
 	v, evicted := c.delete(k)
 	c.mu.Unlock()
@@ -94,7 +98,7 @@ func (c *CacheMemory) Delete(k string) {
 	}
 }
 
-func (c *CacheMemory) delete(k string) (interface{}, bool) {
+func (c *cacheMemory) delete(k string) (interface{}, bool) {
 	if c.onEvicted != nil {
 		if v, found := c.Items[k]; found {
 			delete(c.Items, k)
@@ -106,7 +110,7 @@ func (c *CacheMemory) delete(k string) (interface{}, bool) {
 }
 
 // Delete all expired items from the cache.
-func (c *CacheMemory) DeleteExpired() {
+func (c *cacheMemory) DeleteExpired() {
 	var evictedItems []keyAndValue
 	now := time.Now().UnixNano()
 	c.mu.Lock()
@@ -125,13 +129,13 @@ func (c *CacheMemory) DeleteExpired() {
 	}
 }
 
-func (c *CacheMemory) OnEvicted(f func(string, interface{})) {
+func (c *cacheMemory) OnEvicted(f func(string, interface{})) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.onEvicted = f
 }
 
-func (c *CacheMemory) Scan(f func([]byte, []byte) error) {
+func (c *cacheMemory) Scan(f func([]byte, []byte) error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -142,7 +146,7 @@ func (c *CacheMemory) Scan(f func([]byte, []byte) error) {
 	}
 }
 
-func (c *CacheMemory) CloneItems() map[string]Item {
+func (c *cacheMemory) CloneItems() map[string]Item {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	m := make(map[string]Item, len(c.Items))
@@ -159,7 +163,7 @@ func (c *CacheMemory) CloneItems() map[string]Item {
 	return m
 }
 
-func (c *CacheMemory) ItemCount() int {
+func (c *cacheMemory) ItemCount() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	n := len(c.Items)
@@ -167,38 +171,36 @@ func (c *CacheMemory) ItemCount() int {
 	return n
 }
 
-func (c *CacheMemory) Empty() {
+func (c *cacheMemory) Empty() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.Items = map[string]Item{}
 }
 
-func newCache(de time.Duration, m map[string]Item) *CacheMemory {
+func newCache(de time.Duration, m map[string]Item) *cacheMemory {
 	if de == 0 {
 		de = -1
 	}
-	c := &CacheMemory{
+	c := &cacheMemory{
 		DefaultExpiration: de,
 		Items:             m,
 	}
 	return c
 }
 
-type finalizerWrapper struct {
-	*CacheMemory
-}
-
 func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[string]Item) *CacheMemory {
 	c := newCache(de, m)
+	w := &CacheMemory{
+		cacheMemory: c,
+	}
 	if ci > 0 {
 		runJanitor(c, ci)
-		wrapper := &finalizerWrapper{CacheMemory: c}
-		runtime.SetFinalizer(wrapper, func(w *finalizerWrapper) {
-			stopJanitor(w.CacheMemory)
+		runtime.SetFinalizer(w, func(c *CacheMemory) {
+			stopJanitor(c.cacheMemory)
 		})
 	}
-	return c
+	return w
 }
 
 func New(defaultExpiration, cleanupInterval time.Duration) *CacheMemory {
