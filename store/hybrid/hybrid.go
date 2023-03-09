@@ -26,7 +26,6 @@ const (
 	LevelDB DBType = iota
 	PogrebDB
 	BBoltDB
-	PebbleDB
 	BuntDB
 )
 

@@ -4,5 +4,4 @@ const Megabyte = 1 << 20
 
 var (
 	OpenPogrebDB func(string) (DB, error)
-	OpenPebbleDB func(string) (DB, error)
 )
