@@ -7,7 +7,7 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.3.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/utils v0.0.14
+	github.com/projectdiscovery/utils v0.0.15
 	github.com/rs/xid v1.4.0
 	github.com/stretchr/testify v1.8.2
 	github.com/syndtr/goleveldb v1.0.0
