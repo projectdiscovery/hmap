@@ -23,7 +23,7 @@ type LevelDB struct {
 // OpenLevelDB - Opens the specified path
 func OpenLevelDB(path string) (*LevelDB, error) {
 	db, err := leveldb.OpenFile(path, &opt.Options{
-		CompactionTableSize: 64 * Megabyte,
+		CompactionTableSize: 256 * Megabyte,
 	})
 	if err != nil {
 		return nil, err
