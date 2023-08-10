@@ -11,6 +11,7 @@ import (
 	"github.com/bits-and-blooms/bloom/v3"
 	lru "github.com/hashicorp/golang-lru/v2"
 	fileutil "github.com/projectdiscovery/utils/file"
+	permissionutil "github.com/projectdiscovery/utils/permission"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -36,7 +37,7 @@ type FileDB struct {
 
 // Open a new file based db
 func Open(options Options) (*FileDB, error) {
-	db, err := os.OpenFile(options.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	db, err := os.OpenFile(options.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, permissionutil.ConfigFilePermission)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func Open(options Options) (*FileDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	tmpDb, err := os.Create(tmpFileName)
+	tmpDb, err := os.OpenFile(tmpFileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, permissionutil.TempFilePermission)
 	if err != nil {
 		return nil, err
 	}
