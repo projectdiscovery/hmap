@@ -1,6 +1,6 @@
 module github.com/projectdiscovery/hmap
 
-go 1.18
+go 1.21
 
 require (
 	github.com/akrylysov/pogreb v0.10.1
