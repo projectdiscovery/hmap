@@ -61,8 +61,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/projectdiscovery/blackrock v0.0.1 h1:lHQqhaaEFjgf5WkuItbpeCZv2DUIE45k0VbGJyft6LQ=
 github.com/projectdiscovery/blackrock v0.0.1/go.mod h1:ANUtjDfaVrqB453bzToU+YB4cUbvBRpLvEwoWIwlTss=
-github.com/projectdiscovery/utils v0.2.9 h1:QDhKUC7nX6O6IRoaSWpQ+bzVn9Pq346386zVbOQrXlM=
-github.com/projectdiscovery/utils v0.2.9/go.mod h1:nVnY7qVu5tkN95BBm0rUkzPsfiiRozI7aJ2Gszu+WFM=
+github.com/projectdiscovery/utils v0.2.10 h1:MFx9pAaSyYGjXNi46mdAD7ceSZ80E0AGeuBj8fXaAF4=
+github.com/projectdiscovery/utils v0.2.10/go.mod h1:jvTckFUQxZSiJrhACUuU63tqtd0tdBu3ng3QUVm/Ce0=
 github.com/rs/xid v1.5.0 h1:mKX4bl4iPYJtEIxp6CYiUuLQ/8DYMoz0PUdtGgMFRVc=
 github.com/rs/xid v1.5.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d h1:hrujxIzL1woJ7AwssoOcM/tq5JjjG2yYOc8odClEiXA=
