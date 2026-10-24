@@ -138,11 +138,11 @@ func (fdb *FileDB) Process() error {
 		_ = fdb.Set(sc.Bytes(), nil)
 	}
 
-	fdb.tmpDb.Close()
+	_ = fdb.tmpDb.Close()
 
 	// flush to disk
-	fdb.dbWriter.Close()
-	fdb.db.Close()
+	_ = fdb.dbWriter.Close()
+	_ = fdb.db.Close()
 
 	// cleanup filters
 	switch fdb.options.Dedupe {
@@ -153,8 +153,8 @@ func (fdb *FileDB) Process() error {
 	case MemoryFilter:
 		fdb.bdb.ClearAll()
 	case DiskFilter:
-		fdb.ddb.Close()
-		os.RemoveAll(fdb.ddbName)
+		_ = fdb.ddb.Close()
+		_ = os.RemoveAll(fdb.ddbName)
 	}
 
 	return nil
@@ -172,8 +172,8 @@ func (fdb *FileDB) Reset() error {
 		fdb.bdb.ClearAll()
 	case DiskFilter:
 		// close - remove - reopen
-		fdb.ddb.Close()
-		os.RemoveAll(fdb.ddbName)
+		_ = fdb.ddb.Close()
+		_ = os.RemoveAll(fdb.ddbName)
 		var err error
 		fdb.ddb, err = leveldb.OpenFile(fdb.ddbName, nil)
 		if err != nil {
@@ -182,7 +182,7 @@ func (fdb *FileDB) Reset() error {
 	}
 
 	// reset the tmp file
-	fdb.tmpDb.Close()
+	_ = fdb.tmpDb.Close()
 	var err error
 	fdb.tmpDb, err = os.Create(fdb.tmpDbName)
 	if err != nil {
@@ -190,7 +190,7 @@ func (fdb *FileDB) Reset() error {
 	}
 
 	// reset the target file
-	fdb.db.Close()
+	_ = fdb.db.Close()
 	fdb.db, err = os.Create(fdb.tmpDbName)
 	if err != nil {
 		return err
@@ -220,17 +220,17 @@ func (fdb *FileDB) Size() int64 {
 func (fdb *FileDB) Close() {
 	tmpDBFilename := fdb.tmpDb.Name()
 	_ = fdb.tmpDb.Close()
-	os.RemoveAll(tmpDBFilename)
+	_ = os.RemoveAll(tmpDBFilename)
 
 	_ = fdb.db.Close()
 	dbFilename := fdb.db.Name()
 	if fdb.options.Cleanup {
-		os.RemoveAll(dbFilename)
+		_ = os.RemoveAll(dbFilename)
 	}
 
 	if fdb.ddbName != "" {
-		fdb.ddb.Close()
-		os.RemoveAll(fdb.ddbName)
+		_ = fdb.ddb.Close()
+		_ = os.RemoveAll(fdb.ddbName)
 	}
 }
 
@@ -292,7 +292,7 @@ func (fdb *FileDB) Scan(handler func([]byte, []byte) error) error {
 	if err != nil {
 		return err
 	}
-	defer dbCopy.Close()
+	defer func() { _ = dbCopy.Close() }()
 
 	var dbReader io.ReadCloser
 	if fdb.options.Compress {

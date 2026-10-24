@@ -32,14 +32,14 @@ func normal(wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer hm.Close()
+	defer func() { _ = hm.Close() }()
 	err2 := hm.Set("a", []byte("b"))
 	if err2 != nil {
 		log.Fatal(err2)
 	}
 	v, ok := hm.Get("a")
 	if ok {
-		log.Println(v)
+		log.Println(string(v))
 	}
 }
 
@@ -53,7 +53,7 @@ func memoryExpire(wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer hm.Close()
+	defer func() { _ = hm.Close() }()
 	err2 := hm.Set("a", []byte("b"))
 	if err2 != nil {
 		log.Fatal(err2)
@@ -73,7 +73,7 @@ func disk(wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer hm.Close()
+	defer func() { _ = hm.Close() }()
 	err2 := hm.Set("a", []byte("b"))
 	if err2 != nil {
 		log.Fatal(err2)
@@ -99,7 +99,7 @@ func hybridz(wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer hm.Close()
+	defer func() { _ = hm.Close() }()
 	err2 := hm.Set("a", []byte("b"))
 	if err2 != nil {
 		log.Fatal(err2)
@@ -108,7 +108,7 @@ func hybridz(wg *sync.WaitGroup) {
 	// this should happen from disk
 	v, ok := hm.Get("a")
 	if ok {
-		log.Println("Read1 (disk)", v)
+		log.Println("Read1 (disk)", string(v))
 	} else {
 		log.Println("Read1 (disk) Not found")
 	}
@@ -124,7 +124,7 @@ func hybridz(wg *sync.WaitGroup) {
 	// this should happen from memory again
 	v3, ok3 := hm.Get("a")
 	if ok3 {
-		log.Println("Read2 (memory)", v3)
+		log.Println("Read2 (memory)", string(v3))
 	} else {
 		log.Println("Read2 (memory) Not found")
 	}
@@ -193,7 +193,7 @@ func testhybrid(name string, opts hybrid.Options, total int) (duration time.Dura
 	read := 0
 	hm.Scan(func(k, v []byte) error {
 		gotValue := string(v)
-		if "test" != gotValue {
+		if gotValue != "test" {
 			return errors.New("unexpected item")
 		}
 		read++

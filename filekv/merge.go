@@ -65,7 +65,7 @@ func (f *FileDB) MergeFile(filename string) (uint, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer newF.Close()
+	defer func() { _ = newF.Close() }()
 
 	return f.MergeReader(newF)
 }

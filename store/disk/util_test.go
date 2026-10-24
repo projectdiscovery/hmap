@@ -77,5 +77,5 @@ func utiltestGetPath(t *testing.T) (string, error) {
 
 func utiltestRemoveDb(t *testing.T, db DB, pbpath string) {
 	db.Close()
-	os.RemoveAll(pbpath)
+	_ = os.RemoveAll(pbpath)
 }

@@ -16,29 +16,29 @@ func main() {
 	list1, list2, list3 := "list1.txt", "list2.txt", "list3.txt"
 	fList1, _ := os.Create(list1)
 	for i := 0; i < 100000; i++ {
-		_, _ = fList1.WriteString(fmt.Sprintf("%d\n", i))
+		_, _ = fmt.Fprintf(fList1, "%d\n", i)
 	}
-	fList1.Close()
+	_ = fList1.Close()
 
 	fList2, _ := os.Create(list2)
 	// 1000 items overlaps
 	for i := 90000; i < 200000; i++ {
-		_, _ = fList2.WriteString(fmt.Sprintf("%d\n", i))
+		_, _ = fmt.Fprintf(fList2, "%d\n", i)
 	}
-	fList2.Close()
+	_ = fList2.Close()
 
 	// third list is still on disk but will be used as io.reader
 	fList3, _ := os.Create(list3)
 	// 1000 items overlaps
 	for i := 190000; i < 300000; i++ {
-		_, _ = fList3.WriteString(fmt.Sprintf("%d\n", i))
+		_, _ = fmt.Fprintf(fList3, "%d\n", i)
 	}
-	fList3.Close()
+	_ = fList3.Close()
 
 	// 4th list will be a list of new-line separated numbers
 	var list4 strings.Builder
 	for i := 290000; i < 400000; i++ {
-		list4.WriteString(fmt.Sprintf("%d\n", i))
+		fmt.Fprintf(&list4, "%d\n", i)
 	}
 
 	opts := filekv.DefaultOptions
