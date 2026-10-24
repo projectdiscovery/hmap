@@ -58,7 +58,7 @@ func TestKV(t *testing.T) {
 
 func TestFileKV(t *testing.T) {
 	dbpath, _ := fileutil.GetTempFileName()
-	os.RemoveAll(dbpath)
+	_ = os.RemoveAll(dbpath)
 	opts := filekv.DefaultOptions
 	opts.Cleanup = true
 	opts.Compress = true
