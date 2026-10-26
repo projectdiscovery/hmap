@@ -7,7 +7,7 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.5.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/utils v0.11.9
+	github.com/projectdiscovery/utils v0.11.10
 	github.com/rs/xid v1.5.0
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
@@ -36,7 +36,7 @@ require (
 	github.com/tidwall/tinyqueue v0.1.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
