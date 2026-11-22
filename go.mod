@@ -7,7 +7,7 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.5.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/utils v0.11.14
+	github.com/projectdiscovery/utils v0.11.15
 	github.com/rs/xid v1.5.0
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
@@ -25,7 +25,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
 	github.com/onsi/gomega v1.16.0 // indirect
-	github.com/projectdiscovery/blackrock v0.0.2 // indirect
+	github.com/projectdiscovery/blackrock v0.0.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/tidwall/btree v1.4.3 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
