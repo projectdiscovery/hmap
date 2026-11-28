@@ -59,8 +59,8 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/projectdiscovery/blackrock v0.0.4 h1:xFqk3gqbLDfJuqfpTer+rtwz3q7JLnz/a/A2hbFB8rI=
 github.com/projectdiscovery/blackrock v0.0.4/go.mod h1:ANUtjDfaVrqB453bzToU+YB4cUbvBRpLvEwoWIwlTss=
-github.com/projectdiscovery/utils v0.11.15 h1:SL02AwUsTvuAt5fu+uxEzjZPwtc0Oj1MVky89GlcnR0=
-github.com/projectdiscovery/utils v0.11.15/go.mod h1:xi8KJ+NENlIk4sgfnvihJdcR+4qnEO5Z67fvN5Md33w=
+github.com/projectdiscovery/utils v0.11.17 h1:hqV2VWFQgKpZpiocxaeKSpi1P5Sxe/eWoerjnrylbuE=
+github.com/projectdiscovery/utils v0.11.17/go.mod h1:V7mzVw7HPp6VmF/rlykWsSaW4T2HPBUfn8rdFJIfssY=
 github.com/rs/xid v1.5.0 h1:mKX4bl4iPYJtEIxp6CYiUuLQ/8DYMoz0PUdtGgMFRVc=
 github.com/rs/xid v1.5.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d h1:hrujxIzL1woJ7AwssoOcM/tq5JjjG2yYOc8odClEiXA=
